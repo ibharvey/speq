@@ -19,17 +19,17 @@ target_include_directories( arg_parse PRIVATE
   )
 target_link_libraries(arg_parse LINK_PUBLIC seqan3::seqan3)
 
-# traversal library
-add_library(traversal traversal.cpp)
+# aligner library
+add_library(aligner aligner.cpp)
 
-target_include_directories( traversal PRIVATE
+target_include_directories( aligner PRIVATE
   "${CMAKE_SOURCE_DIR}/include"
   )
-target_link_libraries(traversal LINK_PUBLIC seqan3::seqan3)
+target_link_libraries(aligner LINK_PUBLIC seqan3::seqan3)
 
 target_include_directories(hopa PRIVATE
   "${CMAKE_SOURCE_DIR}/include"
   )
 
-target_link_libraries(hopa LINK_PUBLIC arg_parse traversal seqan3::seqan3)
+target_link_libraries(hopa LINK_PUBLIC arg_parse aligner seqan3::seqan3)
 
