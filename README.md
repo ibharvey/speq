@@ -1,19 +1,18 @@
-# hopa - Homogenized orientation using pairwise alignments
+# speq - Strain PErcent Quantifier
 
 ## Rationale
-De novo sequence assembly and structural variant analyses can generate lists of sequences that are similar, but in arbitrary orientations. HOPA simply takes an input FASTA file and aligns each sequence (forward and reverse complement) against the first sequence in the list to determine the 'best' orientation of each sequence to the first and outputs this oriented file. 
-
+Metagenomic sequencing studies can contain DNA from multiple species, which are often relatively easy to distinguish. However, if a sample contains multiple variants of the same virus/organism, a large fraction of the reads may be synonymous in both variants. SPeQ only uses the polymorphisms that distinguish individual variants in order to sensitively quantify percentages of strains/variants.
 
 
 ## Installation
 ```
-git clone --recursive https://github.com/ibharvey/hopa
-cd hopa
+git clone --recursive https://github.com/ibharvey/speq
+cd speq
 mkdir -p build
 cd build
 cmake ..
 make
-#Builds a binary located at ..../hopa/build/src/hopa
+#Builds a binary located at ..../speq/build/src/speq
 ```
 
-HOPA requires Seqan3 and its respective dependencies. FYI this includes a fairly new compiler.
+SPeQ requires Seqan3 and its respective dependencies. FYI this includes a fairly new compiler.
