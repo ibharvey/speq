@@ -5,7 +5,10 @@
 
 struct cmd_arguments
 {
-    std::filesystem::path in_file_path{};
+    std::filesystem::path in_file_reads_path_1{};
+    std::filesystem::path in_file_reads_path_2{};
+    std::filesystem::path in_file_references{};
+    std::filesystem::path in_file_references_groups{};
     std::filesystem::path out_file_path{"output.fa"};
     bool reverse{};
     bool overwrite{};

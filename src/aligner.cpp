@@ -1,6 +1,6 @@
 #include "aligner.hpp"
 
-int hopa_run(cmd_arguments args)
+int speq_run(cmd_arguments args)
 {
     seqan3::sequence_file_input fin{args.in_file_path};
 

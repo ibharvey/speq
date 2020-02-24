@@ -11,12 +11,15 @@ cmd_arguments initialize_argument_parser(const std::string name, int argc, char 
     parser.info.synopsis = {"./hopa [options] my_input_sequences.fa"};
     parser.info.version = "0.1";
 
-    parser.add_positional_option(args.in_file_path, "A fast(aq) file to be oriented.");
-    parser.add_option(args.out_file_path, 'o', "output", "Output file for oriented sequences.");
-    parser.add_flag(args.overwrite, 'w',"overwrite", "Overwrite the input file with the output.");
+    parser.add_section("Input/Output Arguments");
+    parser.add_option(args.in_file_reads_path_1,'1',"foward", "A fast(aq) file of the forward reads.");
+    parser.add_option(args.in_file_reads_path_2,'2',"reverse", "A fast(aq) file of the reverse reads.");
+    parser.add_option(args.in_file_references,'r',"reference", "The reference sequences in FASTA format.");
+    parser.add_option(args.in_file_references_groups,'g',"groups", "Groupings of reference sequences.");
+    parser.add_option(args.out_file_path, 'o', "output", "Output file of percentages.");
+
+    parser.add_section("Misc");
     parser.add_flag(args.force, 'f', "force", "Force the program to overwrite an existing file.");
-    parser.add_flag(args.reverse, 'r', "reverse", "Reverse the global orientation of the output "
-                                                    "opposite the first sequence in the file.");
     // TODO: Implement gzip and bzip functionality
     /*
     parser.add_flag(args.use_bzip,'j',"bzip", "BZip the output file.");

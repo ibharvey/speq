@@ -21,4 +21,4 @@
 #include <range/v3/view/for_each.hpp>
 #include <range/v3/view/repeat_n.hpp>
 
-int hopa_run(cmd_arguments args);
+int speq_run(cmd_arguments args);
