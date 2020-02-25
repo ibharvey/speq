@@ -9,8 +9,11 @@
             "type": "cppdbg",
             "request": "launch",
             "preLaunchTask": "make",
-            "program": "${workspaceFolder}/build/src/hopa",
-            "args": ["test/seq.fa"],
+            "program": "${workspaceFolder}/build/src/speq",
+            "args": [
+                "-1",
+                 "/home/ian/Documents/Fremont/ExperimentalData/Sequencing/GTAC/DNA/20170521/htcf.wustl.edu/files/nXVRb4XO/Fremont_2641_5/run_2641_s_5_1_withindex_sequence.txt_AAACCTT.fq.gz"
+                ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],

@@ -16,6 +16,8 @@ struct cmd_arguments
     bool use_gzip{};
     bool use_bzip{};
     u_int threads{std::thread::hardware_concurrency()};
+    u_int chunk{10000};
+    u_int16_t kmer{17};
 };
 
 cmd_arguments initialize_argument_parser(const std::string name, int argc, char ** argv);

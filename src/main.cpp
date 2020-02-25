@@ -14,6 +14,8 @@ int main(int argc, char ** argv)
     try
     {
         auto args = initialize_argument_parser("SPeQ", argc, argv);
+        return speq_run_1(args);
+        /*
         if(args.in_file_reads_path_2)
         {
             return speq_run_2(args);
@@ -22,6 +24,7 @@ int main(int argc, char ** argv)
         {
             return speq_run_1(args);
         }
+        */
     }
     catch (seqan3::validation_error const & ext)
     {
