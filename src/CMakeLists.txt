@@ -13,9 +13,13 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 ################## Add external projects #####################
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
+################## Add zlib #####################
+find_package (ZLIB REQUIRED)
+
+################## Add seqan3 #####################
 set(SeqAn3_DIR "${CMAKE_SOURCE_DIR}/deps/seqan3/build_system")
 find_package (SeqAn3 REQUIRED)
-find_package (ZLIB REQUIRED)
+
 
 #################### arg_parse #######################
 add_library(arg_parse arg_parse.cpp)
