@@ -10,8 +10,6 @@ struct cmd_arguments
     std::filesystem::path in_file_references{};
     std::filesystem::path in_file_references_groups{};
     std::filesystem::path out_file_path{"output.fa"};
-    bool reverse{};
-    bool overwrite{};
     bool force{};
     bool use_gzip{};
     bool use_bzip{};
@@ -22,3 +20,4 @@ struct cmd_arguments
 
 cmd_arguments initialize_argument_parser(const std::string name, int argc, char ** argv);
 void check_arguments(cmd_arguments & args);
+void check_in_file(std::filesystem::path & a_path);

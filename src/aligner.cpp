@@ -1,13 +1,14 @@
 #include "aligner.hpp"
 
 
+
 int speq_run_1(cmd_arguments args)
 {
     // Build the reference index
 
 
     // Organize the reference sequences by strain/variant type
-
+    std::map<size_t,std::string> map_back = file_to_map(args.in_file_references_groups);
 
     // Input the reads
     seqan3::sequence_file_input fin{args.in_file_reads_path_1};

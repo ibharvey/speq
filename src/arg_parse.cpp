@@ -35,44 +35,41 @@ cmd_arguments initialize_argument_parser(const std::string name, int argc, char 
     return args;
 }
 
-
-void check_arguments(cmd_arguments & args)
+void check_in_file(std::filesystem::path & a_path)
 {
-    // Check the input file
-    if(args.in_file_reads_path_1.is_relative())
+    // Check the input file #1
+    if(a_path.is_relative())
     {
-        if(std::filesystem::exists(std::filesystem::current_path() / args.in_file_reads_path_1))
+        if(std::filesystem::exists(std::filesystem::current_path() / a_path))
         {
-            args.in_file_reads_path_1 = std::filesystem::current_path() / args.in_file_reads_path_1;
+            a_path = std::filesystem::current_path() / a_path;
         }
         else
         {
-            throw seqan3::validation_error(seqan3::detail::to_string( "The relative-path file ", args.in_file_reads_path_1, " was not found."));
+            throw seqan3::validation_error(seqan3::detail::to_string( "The relative-path file ", a_path, " was not found."));
         }
     }else{
-        if(!std::filesystem::exists(args.in_file_reads_path_1))
+        if(!std::filesystem::exists(a_path))
         {
-            throw seqan3::validation_error(seqan3::detail::to_string( "The full-path file ", args.in_file_reads_path_1, " was not found."));
+            throw seqan3::validation_error(seqan3::detail::to_string( "The full-path file ", a_path, " was not found."));
         }
     }
+}
 
-    // Cannot both be overwriting and setting an output file path
-    if(args.overwrite && args.out_file_path != "output.fa" && args.out_file_path != args.in_file_reads_path_1)
-    {
-        throw seqan3::validation_error(seqan3::detail::to_string( "Either designate an output file OR overwrite the input file."));
-    }
+void check_arguments(cmd_arguments & args)
+{
+    // Check the input file #1
+    check_in_file(args.in_file_reads_path_1);
+    check_in_file(args.in_file_reads_path_2);
+    check_in_file(args.in_file_references);
+    check_in_file(args.in_file_references_groups);
 
-    // Set the output file path if not already a good value.
-    if(args.overwrite)
-    {
-        args.out_file_path = args.in_file_reads_path_1;
-    }
-    else if(args.out_file_path.is_relative())
+    if(args.out_file_path.is_relative())
     {
         args.out_file_path = std::filesystem::current_path() / args.out_file_path;
         if(std::filesystem::exists(args.out_file_path) && !args.force)
         {
-            throw seqan3::validation_error(seqan3::detail::to_string( "Cowardly refusing to use an existing output file. Use 'f' to overwrite."));
+            throw seqan3::validation_error(seqan3::detail::to_string( "Cowardly refusing to use an existing output file. Use '-f' to overwrite."));
         }
     }
 

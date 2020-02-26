@@ -1,10 +1,13 @@
 #pragma once
 
 #include <arg_parse.hpp>
+#include <dispatch.hpp>
+#include <file_to_map.hpp>
 
 #include <thread>
 #include <vector>
 #include <iostream>
+#include <map>
 
 #include <seqan3/search/configuration/all.hpp>
 

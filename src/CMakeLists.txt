@@ -10,34 +10,42 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
-# Add external projects
+################## Add external projects #####################
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
 set(SeqAn3_DIR "${CMAKE_SOURCE_DIR}/deps/seqan3/build_system")
 find_package (SeqAn3 REQUIRED)
 find_package (ZLIB REQUIRED)
 
-add_executable (speq main.cpp)
-
-
-# arg_parse library
+#################### arg_parse #######################
 add_library(arg_parse arg_parse.cpp)
-target_include_directories( arg_parse PRIVATE
-  "${CMAKE_SOURCE_DIR}/include"
-  )
+target_include_directories( arg_parse PRIVATE "${CMAKE_SOURCE_DIR}/include")
 target_link_libraries(arg_parse LINK_PUBLIC seqan3::seqan3)
 
-# aligner library
+#################### file_to_map #######################
+add_library(file_to_map file_to_map.cpp)
+target_include_directories( file_to_map PRIVATE "${CMAKE_SOURCE_DIR}/include")
+target_link_libraries(file_to_map LINK_PUBLIC seqan3::seqan3)
+
+#################### dispatch #######################
+add_library(dispatch dispatch.cpp)
+target_include_directories( dispatch PRIVATE "${CMAKE_SOURCE_DIR}/include")
+target_link_libraries(dispatch LINK_PUBLIC seqan3::seqan3)
+
+#################### aligner #######################
 add_library(aligner aligner.cpp)
+target_include_directories( aligner PRIVATE "${CMAKE_SOURCE_DIR}/include")
+target_link_libraries(aligner LINK_PUBLIC seqan3::seqan3
+                                          arg_parse
+                                          file_to_map
+                                          dispatch
+                                          )
 
-target_include_directories( aligner PRIVATE
-  "${CMAKE_SOURCE_DIR}/include"
-  )
-target_link_libraries(aligner LINK_PUBLIC seqan3::seqan3)
-
-target_include_directories(speq PRIVATE
-  "${CMAKE_SOURCE_DIR}/include"
-  )
-
-target_link_libraries(speq LINK_PUBLIC arg_parse aligner seqan3::seqan3)
+#################### speq  #######################
+add_executable (speq main.cpp)
+target_include_directories(speq PRIVATE "${CMAKE_SOURCE_DIR}/include")
+target_link_libraries(speq LINK_PUBLIC  arg_parse 
+                                        aligner 
+                                        seqan3::seqan3
+                                        )
 

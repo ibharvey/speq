@@ -1,0 +1,14 @@
+MCV-1p: 0,1,2,3,4,10
+MCV-1va: 5,6,7,8,9,11
+MCV-1vb1: 12,13
+MCV-1vb2: 14,15
+MCV-1vc: 16
+MCV-1vd: 17
+MCV-2va: 18,19
+MCV-2vb: 20,21
+MCV-2vc: 22
+MCV-3: 23
+MCV-4: 24,25,26
+Homo sapiens: 27
+Human herpesvirus 5: 28,29
+Human papillomavirus 5/16: 30,31,32
