@@ -11,11 +11,9 @@ struct cmd_arguments
     std::filesystem::path in_file_references_groups{};
     std::filesystem::path out_file_path{"output.fa"};
     bool force{};
-    bool use_gzip{};
-    bool use_bzip{};
     u_int threads{std::thread::hardware_concurrency()};
     u_int chunk{10000};
-    u_int16_t kmer{17};
+    u_int8_t kmer{17};
 };
 
 cmd_arguments initialize_argument_parser(const std::string name, int argc, char ** argv);

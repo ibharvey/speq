@@ -7,7 +7,7 @@ cmd_arguments initialize_argument_parser(const std::string name, int argc, char 
     
     parser.info.app_name = name;
     parser.info.author = "Ian B Harvey";
-    parser.info.short_description = "Homogenize Orientation by Pairwise Alignment.";
+    parser.info.short_description = "Species PErcent Quantifier";
     parser.info.synopsis = {"./speq [options]"};
     parser.info.version = "0.1";
 
@@ -17,16 +17,11 @@ cmd_arguments initialize_argument_parser(const std::string name, int argc, char 
     parser.add_option(args.in_file_references,'r',"reference", "The reference sequences in FASTA format.");
     parser.add_option(args.in_file_references_groups,'g',"groups", "Groupings of reference sequences.");
     parser.add_option(args.out_file_path, 'o', "output", "Output file of percentages.");
+    parser.add_flag(args.force, 'f', "force", "Force the program to overwrite an existing file.");
 
     parser.add_section("Misc");
     parser.add_option(args.chunk, 'c', "chunk", "Chunk size when pulling the input file(s).");
     parser.add_option(args.kmer, 'k', "kmer", "Size of the kmer used in searching the references.");
-    parser.add_flag(args.force, 'f', "force", "Force the program to overwrite an existing file.");
-    // TODO: Implement gzip and bzip functionality
-    /*
-    parser.add_flag(args.use_bzip,'j',"bzip", "BZip the output file.");
-    parser.add_flag(args.use_gzip,'z',"gzip", "GZip the output file.");
-    */
     parser.add_option(args.threads, 't', "threads", "Number of threads to use.", seqan3::option_spec::DEFAULT, seqan3::arithmetic_range_validator{1,static_cast<double>(std::thread::hardware_concurrency())});
 
     parser.parse();

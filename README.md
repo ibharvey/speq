@@ -15,7 +15,7 @@ make
 #Builds a binary located at ..../speq/build/src/speq
 ```
 
-SPeQ requires Seqan3 and its respective dependencies. FYI this includes a fairly new compiler.
+SPeQ requires Seqan3 and its respective dependencies. FYI this includes a fairly new compiler. I have only successfully worked with Seqan3 on Ubuntu 18
 
 ## Algorithm
 

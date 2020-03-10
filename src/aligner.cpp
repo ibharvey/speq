@@ -1,47 +1,137 @@
 #include "aligner.hpp"
 
 
+using seqan3::operator""_dna5;
+
+void get_unique_kmers(  const cmd_arguments args,
+                        const std::vector<std::string> group_names,
+                        const std::vector<std::size_t> group_scaffolds,
+                        std::vector<std::vector<std::size_t>> & unique_kmers,
+                        std::vector<std::size_t> & total_kmers)
+{
+    // Input the template scaffolds (genomes)
+    seqan3::sequence_file_input fgenomes{args.in_file_references};
+    // Kmer hash and unique sort each sequence
+    std::vector<std::vector<std::vector<std::size_t>>> unique_hash_reference;
+    unique_hash_reference.resize(group_names.size());
+    std::vector<std::vector<std::vector<std::size_t>>> all_hash_reference;
+    all_hash_reference.resize(group_names.size());
+    std::size_t isolate_index = 0;
+    for(auto & rec : fgenomes)
+    {
+
+        // All N-containing sequences are arbitrary, and should be excluded
+        // auto splitN = seqan3::get<seqan3::field::seq>(rec)  | ranges::views::split("N"_dna5) 
+        //                                                     | ranges::to<std::vector>();
+        // auto a_hash= ranges::views::join(ranges::views::transform(splitN, [args](auto c)
+        // {
+        //     return c    | seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{args.kmer}})
+        //                 | ranges::to<std::vector>();
+        // })) | ranges::to<std::vector>();
+        // auto b_hash= ranges::views::join(ranges::views::transform(splitN, [args](auto c)
+        // {
+        //     return seqan3::views::complement(std::views::reverse(c))
+        //                 | seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{args.kmer}})
+        //                 | ranges::to<std::vector>();
+        // })) | ranges::to<std::vector>();
+
+        auto a_hash = seqan3::get<seqan3::field::seq>(rec)  | seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{args.kmer}})
+                                                            | ranges::to<std::vector>();
+        auto b_hash = seqan3::get<seqan3::field::seq>(rec)  | seqan3::views::complement
+                                                            | std::views::reverse
+                                                            | seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{args.kmer}})
+                                                            | ranges::to<std::vector>();
+        a_hash = ranges::actions::sort(a_hash) | ranges::to<std::vector>();
+        b_hash = ranges::actions::sort(b_hash) | ranges::to<std::vector>();
+        auto gi_index = group_scaffolds[isolate_index];
+        all_hash_reference[gi_index].push_back(a_hash);
+        all_hash_reference[gi_index].push_back(b_hash);
+        auto a_unique_hash = ranges::actions::unique(a_hash) | ranges::to<std::vector>();
+        auto b_unique_hash = ranges::actions::unique(b_hash) | ranges::to<std::vector>();
+        unique_hash_reference[gi_index].push_back(a_unique_hash);
+        unique_hash_reference[gi_index].push_back(b_unique_hash);
+        ++isolate_index;
+    }
+
+    // For each strain-group
+    for(auto it = std::begin(all_hash_reference); it != std::end(all_hash_reference); ++it)
+    {
+        // Make a temp kmer vector
+        std::vector<std::size_t> temp_kmer_vec;
+        for(auto jt = std::begin(*it); jt != std::end(*it); ++jt)
+        {
+            // Concatenate the forward and reverse kmers
+            auto forward = *jt++;
+            auto reverse = *jt;
+            auto concat_it = ranges::views::concat(forward,reverse);
+            // set_union with the current temp kmer vec
+            temp_kmer_vec = ranges::views::set_union(temp_kmer_vec, concat_it);
+        }
+        // Add the distance of the temp kmer vector 
+        total_kmers.push_back(ranges::distance(temp_kmer_vec));
+    }
+
+    for(auto it = std::begin(unique_hash_reference); it != std::end(unique_hash_reference); ++it)
+    {
+        std::vector<std::size_t> temp_unique_kmer_vec;
+        for(auto jt = std::begin(unique_hash_reference); jt != std::end(unique_hash_reference); ++jt)
+        {
+            if(it != jt)
+            {
+                // set_difference each hash_vector in each group against all other hash_vectors in **other** groups
+                for(auto it2 = std::begin(*it); it2 != std::end(*it); ++it2)
+                {
+                    for(auto jt2 = std::begin(*jt); jt2 != std::end(*jt); ++jt2)
+                    {
+                        *it2 = ranges::views::set_difference(*it2, *jt2) | ranges::to<std::vector>();
+                    }
+                    // Set the union of the unique kmers for a given group into a single vector
+                    temp_unique_kmer_vec = ranges::views::set_union(temp_unique_kmer_vec, *it2) | ranges::to<std::vector>();
+                }
+            }
+        }
+        // Push into the major vector
+        unique_kmers.push_back(temp_unique_kmer_vec);
+    }
+    // Increase the number of each group-specific kmer to 
+    // the max number actually found in any one scaffold within this group
+    for(std::size_t i = 0; i < unique_kmers.size(); ++i)
+    {
+        unique_kmers[i] = ranges::views::for_each(unique_kmers[i], [all_hash_reference,i](auto c)
+            {
+                auto temp = all_hash_reference[i]   | ranges::views::transform([c](auto d){return ranges::count(d,c);});
+                std::size_t num_repeats = ranges::max(temp);
+                return ranges::yield_from(ranges::views::repeat_n(c, num_repeats)); 
+            }
+        ) | ranges::to<std::vector>();
+    }
+    return;
+}
 
 int speq_run_1(cmd_arguments args)
 {
-    // Build the reference index
-
-
     // Organize the reference sequences by strain/variant type
-    std::map<size_t,std::string> map_back = file_to_map(args.in_file_references_groups);
+    std::vector<std::string> group_names;
+    std::vector<std::size_t> group_scaffolds;
+    file_to_map(args.in_file_references_groups, group_names, group_scaffolds);
+        // Find unique kmers in each scaffold/genome-set
+    std::vector<std::vector<std::size_t>> unique_kmers;
+    std::vector<std::size_t> total_kmers;
+    get_unique_kmers(args, group_names, group_scaffolds, unique_kmers, total_kmers);
 
     // Input the reads
     seqan3::sequence_file_input fin{args.in_file_reads_path_1};
     auto chunk_fin = fin | ranges::views::chunk(args.chunk);
 
-    // FM-Index search read kmers against the 
-    auto config =   seqan3::search_cfg::max_error{seqan3::search_cfg::total{0}} |
-                    seqan3::search_cfg::mode{seqan3::search_cfg::all} |
-                    seqan3::search_cfg::parallel{args.threads};
-
     // For each chunk of the input read file
     for(auto it = std::begin(chunk_fin); it != std::end(chunk_fin); it++)
     {
-        std::vector<std::vector<seqan3::dna5>> v_chunk;
         for(auto jt = std::begin(*it); jt != std::end(*it); jt++)
         {
-            // Get all kmers for one sequence and it's reverse complement
+            // Get each kmer within this chunk
             auto fwd_seq = seqan3::get<seqan3::field::seq>(*jt);
-            auto rev_seq = fwd_seq | seqan3::views::complement | std::views::reverse;
-            auto fwd_kmers = fwd_seq | ranges::views::sliding(args.kmer);
-            for(auto k = ranges::begin(fwd_kmers); k != ranges::end(fwd_kmers); k++)
-            {
-                v_chunk.insert(v_chunk.end(), *k | ranges::to<std::vector>());
-            }
             
-            // I flip these kmers so when I am comparing search results I can iterate concurrently.
-            auto rev_kmers = rev_seq | ranges::views::sliding(args.kmer) | std::views::reverse;
-            for(auto k = ranges::begin(rev_kmers); k != ranges::end(rev_kmers); k++)
-            {
-                v_chunk.push_back(*k | ranges::to<std::vector>());
-            }
         }
-        seqan3::debug_stream << "Num Kmers in chunk: " << v_chunk.size() << "\n";
     }
     return 0;
 }
@@ -79,3 +169,25 @@ int speq_run_2(cmd_arguments args)
     return 0;
 }
 */
+
+// std::vector<seqan3::dna5> text{"ACGTAGC"_dna5};
+// auto hashes = text | seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{3}}) | ranges::to<std::vector>();
+// hashes = ranges::actions::sort(hashes);
+// seqan3::debug_stream << hashes << "\n";
+
+// std::vector<seqan3::dna5> text2{"GCTACGTGCT"_dna5};
+// auto hashes2 = text2 | seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{3}}) | ranges::to<std::vector>();
+// hashes2 = ranges::actions::sort(hashes2);
+// seqan3::debug_stream << hashes2 << "\n";
+
+// auto hashes3 = ranges::actions::unique(hashes2);
+// seqan3::debug_stream << hashes3 << "\n";
+
+// auto hashes4 = ranges::views::set_difference(hashes3, hashes);
+// seqan3::debug_stream << hashes4 << "\n";
+
+// std::vector<seqan3::dna5> text25{"GCTACGTNGCT"_dna5};
+// auto hashes25 = text25 | seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{3}}) | ranges::to<std::vector>();
+// seqan3::debug_stream << hashes25 << "\n";
+// hashes25 = ranges::actions::sort(hashes25);
+// return 0;

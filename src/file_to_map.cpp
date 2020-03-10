@@ -1,26 +1,40 @@
 #include <file_to_map.hpp>
 
-std::map<size_t,std::string> file_to_map(std::filesystem::path a_path)
+void file_to_map(   std::filesystem::path a_path,
+                    std::vector<std::string> & group_names, 
+                    std::vector<std::size_t> & group_scaffolds)
 {
-    std::map<size_t,std::string> map_out;
     std::ifstream inf(a_path);
     std::string line,variant;
-    size_t genome_index;
+    size_t isolate_index; size_t variant_index = -1;
     if(inf.is_open())
     {
         while(std::getline(inf,line))
         {
-            auto col_ind = line.find(":");
-            variant = line.substr(0,col_ind);
-            auto gis = line.substr(col_ind + 1);
-            std::stringstream ss;
-            ss << gis;
-            while(ss.rdbuf()->in_avail() > 0)
+            // Ignore in-line comments in the file
+            if(line.find("#") != std::string::npos) line = line.substr(0,line.find("#"));
+            // Ignore full-line comments in the file
+            if(line.find(":") != std::string::npos)
             {
-                ss >> genome_index;
-                map_out[genome_index] = variant;
+                // Get the strain/species group name
+                auto col_ind = line.find(":");
+                variant = line.substr(0,col_ind);
+                group_names.push_back(variant);
+                variant_index++;
+                // Get the scaffold indices that are assigned to this strain/species
+                auto gis = line.substr(col_ind + 1);
+                std::stringstream ss;
+                ss << gis;
+                while(ss.rdbuf()->in_avail() > 0)
+                {
+                    ss >> isolate_index;
+                    if(isolate_index > group_scaffolds.size() - 1)
+                        group_scaffolds.resize(isolate_index+1);
+                    group_scaffolds[isolate_index] = variant_index;
+                    
+                }
             }
         }
     }
-    return map_out;
+    return;
 }

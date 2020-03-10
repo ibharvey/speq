@@ -1,14 +1,13 @@
-MCV-1p: 0 1 2 3 4 10
-MCV-1va: 5 6 7 8 9 11
-MCV-1vb1: 12 13
-MCV-1vb2: 14 15
-MCV-1vc: 16
-MCV-1vd: 17
-MCV-2va: 18 19
-MCV-2vb: 20 21
-MCV-2vc: 22
-MCV-3: 23
-MCV-4: 24 25 26
-Homo sapiens: 27
-Human herpesvirus 5: 28 29
-Human papillomavirus 5/16: 30 31 32
+# Genotypes can be either tab or space-delimited
+ignored;                    500                          # Without a colon, the line is also ignored.
+MCV-1p:                     0   1   2   3   4   5   36  37
+MCV-1va:                    6   7   8   9   10  11  12  13  14  15  16  17  18  38
+MCV-1vb1:                   19  20
+MCV-1vb2:                   21  22
+MCV-1vc:                    39
+MCV-1vd:                    23
+MCV-2:                      24  25  26  27  28  29  30  40
+MCV-2v:                     31
+MCV-3:                      32
+MCV-4:                      33  34  35
+

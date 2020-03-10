@@ -31,10 +31,6 @@ add_library(file_to_map file_to_map.cpp)
 target_include_directories( file_to_map PRIVATE "${CMAKE_SOURCE_DIR}/include")
 target_link_libraries(file_to_map LINK_PUBLIC seqan3::seqan3)
 
-#################### dispatch #######################
-add_library(dispatch dispatch.cpp)
-target_include_directories( dispatch PRIVATE "${CMAKE_SOURCE_DIR}/include")
-target_link_libraries(dispatch LINK_PUBLIC seqan3::seqan3)
 
 #################### aligner #######################
 add_library(aligner aligner.cpp)
@@ -42,7 +38,6 @@ target_include_directories( aligner PRIVATE "${CMAKE_SOURCE_DIR}/include")
 target_link_libraries(aligner LINK_PUBLIC seqan3::seqan3
                                           arg_parse
                                           file_to_map
-                                          dispatch
                                           )
 
 #################### speq  #######################

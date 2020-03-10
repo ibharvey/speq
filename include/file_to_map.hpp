@@ -1,11 +1,13 @@
 
-#include <map>
 #include <string>
 #include <fstream>
 #include <iterator>
 #include <sstream>
+#include <vector>
 
 #include <seqan3/std/filesystem>
 #include <range/v3/view/split.hpp>
 
-std::map<size_t,std::string> file_to_map(std::filesystem::path a_path);
+void file_to_map(   std::filesystem::path a_path, 
+                    std::vector<std::string> & group_names, 
+                    std::vector<std::size_t> & group_scaffolds);
