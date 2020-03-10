@@ -65,7 +65,7 @@ void get_unique_kmers(  const cmd_arguments args,
             auto reverse = *jt;
             auto concat_it = ranges::views::concat(forward,reverse);
             // set_union with the current temp kmer vec
-            temp_kmer_vec = ranges::views::set_union(temp_kmer_vec, concat_it);
+            temp_kmer_vec = ranges::views::set_union(temp_kmer_vec, concat_it) | ranges::to<std::vector>();
         }
         // Add the distance of the temp kmer vector 
         total_kmers.push_back(ranges::distance(temp_kmer_vec));
@@ -124,15 +124,59 @@ int speq_run_1(cmd_arguments args)
     auto chunk_fin = fin | ranges::views::chunk(args.chunk);
 
     // For each chunk of the input read file
+    size_t ambiguous_reads = 0;
+    std::vector<std::size_t> hit_unique_kmers_per_group;
+    hit_unique_kmers_per_group.resize(group_names.size(),0);
     for(auto it = std::begin(chunk_fin); it != std::end(chunk_fin); it++)
     {
         for(auto jt = std::begin(*it); jt != std::end(*it); jt++)
         {
-            // Get each kmer within this chunk
-            auto fwd_seq = seqan3::get<seqan3::field::seq>(*jt);
-            
+            // Sort the kmers within this read
+            auto read_kmers = seqan3::get<seqan3::field::seq>(*jt)  | seqan3::views::kmer_hash(seqan3::shape{seqan3::ungapped{args.kmer}})
+                                                                    | ranges::to<std::vector>();
+            read_kmers = ranges::actions::sort(read_kmers);
+            /* Compare these to the reference unique kmers
+                  There should only be one type with hits!
+                  If there are more than one group hit, this may be:
+                      1) Recombination between two nucleotide sequences
+                      2) Another species not accounted for in the reference file
+            */
+            bool already_hit = false; bool is_ambiguous = false;
+            std::vector<std::size_t> hits;
+            std::size_t group_index_counter = 0; std::size_t group_hit_index = 0;
+            for(auto group_it = std::begin(unique_kmers); group_it != std::end(unique_kmers); ++group_it)
+            {
+                auto temp_intersection = ranges::views::set_intersection(read_kmers, *group_it);
+                if(ranges::distance(temp_intersection) > 0)
+                {
+                    if(already_hit)
+                    {
+                        // The read is hitting at least two different reference species
+                        // so we are calling it as ambiguous.
+                        ambiguous_reads++;
+                        is_ambiguous = true;
+                        break;
+                    }
+                    else
+                    {
+                        hits = temp_intersection | ranges::to<std::vector>();
+                        group_hit_index = group_index_counter;
+                        already_hit = true;
+                    }
+                }
+                group_index_counter++;
+            }
+            // If you hit one and only one group
+            if(!is_ambiguous && already_hit)
+            {
+                // Add the number of unique kmers hit to that group's total
+                // TODO: If you are only using 'hits' for the size, just keep a variable for the size
+                hit_unique_kmers_per_group[group_hit_index] += ranges::distance(hits);
+            }
         }
     }
+    seqan3::debug_stream << hit_unique_kmers_per_group << "\n";
+    seqan3::debug_stream << total_kmers << "\n";
     return 0;
 }
 /*
