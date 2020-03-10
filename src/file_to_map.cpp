@@ -28,10 +28,9 @@ void file_to_map(   std::filesystem::path a_path,
                 while(ss.rdbuf()->in_avail() > 0)
                 {
                     ss >> isolate_index;
-                    if(isolate_index > group_scaffolds.size() - 1)
+                    if(isolate_index + 1 > group_scaffolds.size())
                         group_scaffolds.resize(isolate_index+1);
                     group_scaffolds[isolate_index] = variant_index;
-                    
                 }
             }
         }

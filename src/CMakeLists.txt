@@ -48,3 +48,5 @@ target_link_libraries(speq LINK_PUBLIC  arg_parse
                                         seqan3::seqan3
                                         )
 
+install(TARGETS speq
+        DESTINATION bin)

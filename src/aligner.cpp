@@ -110,14 +110,17 @@ void get_unique_kmers(  const cmd_arguments args,
 
 int speq_run_1(cmd_arguments args)
 {
+    seqan3::debug_stream << "Starting Run:\n";
     // Organize the reference sequences by strain/variant type
     std::vector<std::string> group_names;
     std::vector<std::size_t> group_scaffolds;
     file_to_map(args.in_file_references_groups, group_names, group_scaffolds);
+    seqan3::debug_stream << "Mapped file.\n";
         // Find unique kmers in each scaffold/genome-set
     std::vector<std::vector<std::size_t>> unique_kmers;
     std::vector<std::size_t> total_kmers;
     get_unique_kmers(args, group_names, group_scaffolds, unique_kmers, total_kmers);
+    seqan3::debug_stream << "Got Unique Kmers.\n";
 
     // Input the reads
     seqan3::sequence_file_input fin{args.in_file_reads_path_1};
