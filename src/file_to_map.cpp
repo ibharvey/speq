@@ -2,7 +2,7 @@
 
 void file_to_map(   std::filesystem::path a_path,
                     std::vector<std::string> & group_names, 
-                    std::vector<std::size_t> & group_scaffolds)
+                    std::vector<int> & group_scaffolds)
 {
     std::ifstream inf(a_path);
     std::string line,variant;
@@ -29,7 +29,7 @@ void file_to_map(   std::filesystem::path a_path,
                 {
                     ss >> isolate_index;
                     if(isolate_index + 1 > group_scaffolds.size())
-                        group_scaffolds.resize(isolate_index+1);
+                        group_scaffolds.resize(isolate_index+1,-1);
                     group_scaffolds[isolate_index] = variant_index;
                 }
             }

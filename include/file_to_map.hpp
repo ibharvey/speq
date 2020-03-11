@@ -10,4 +10,4 @@
 
 void file_to_map(   std::filesystem::path a_path, 
                     std::vector<std::string> & group_names, 
-                    std::vector<std::size_t> & group_scaffolds);
+                    std::vector<int> & group_scaffolds);

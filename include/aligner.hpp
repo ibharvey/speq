@@ -6,6 +6,8 @@
 #include <thread>
 #include <vector>
 #include <iostream>
+#include <algorithm>
+#include <functional>
 
 #include <seqan3/range/views/kmer_hash.hpp>
 
@@ -35,9 +37,10 @@
 
 #include <range/v3/algorithm/copy_backward.hpp>
 
+
 void get_unique_kmers(  const cmd_arguments args, 
                         const std::vector<std::string> group_names,
-                        const std::vector<std::size_t> group_scaffolds,
+                        const std::vector<int> group_scaffolds,
                         std::vector<std::vector<std::size_t>> & unique_kmers,
                         std::vector<std::size_t> & total_kmers);
 int speq_run_1(cmd_arguments args);

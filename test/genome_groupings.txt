@@ -1,7 +1,8 @@
 # Genotypes can be either tab or space-delimited
 ignored;                    500                          # Without a colon, the line is also ignored.
 MCV-1p:                     0   1   2   3   4   5   36  37
-MCV-1va:                    6   7   8   9   10  11  12  13  14  15  16  17  18  38
+#MCV-1va:                    6   7   8   9   10  11  12  13  14  15  16  17  18  38
+MCV-1va:                    6   7   8   9
 MCV-1vb1:                   19  20
 MCV-1vb2:                   21  22
 MCV-1vc:                    39
