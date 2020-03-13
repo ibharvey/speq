@@ -1,14 +1,16 @@
-# Genotypes can be either tab or space-delimited
-ignored;                    500                          # Without a colon, the line is also ignored.
-MCV-1p:                     0   1   2   3   4   5   36  37
-#MCV-1va:                    6   7   8   9   10  11  12  13  14  15  16  17  18  38
-MCV-1va:                    6   7   8   9
-MCV-1vb1:                   19  20
-MCV-1vb2:                   21  22
+# Genotypes can be individually comma separated
+#   or hyphenated to include a range of sequences
+ignored;                    500     # Incorrect formatting is ignored by the parser
+MCV-1p:                     0-5,    36, 37
+MCV-1va:                    6-18,   38
+MCV-1vb1:                   19,     20
+MCV-1vb2:                   21-22
 MCV-1vc:                    39
 MCV-1vd:                    23
-MCV-2:                      24  25  26  27  28  29  30  40
+MCV-2:                      24-30,  40
 MCV-2v:                     31
 MCV-3:                      32
-MCV-4:                      33  34  35
-
+MCV-4:                      33-35
+Homo sapiens:               41-679
+Human herpesvirus 5:        680
+Human papillomavirus 5/16:  681-682

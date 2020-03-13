@@ -32,10 +32,18 @@ target_include_directories( file_to_map PRIVATE "${CMAKE_SOURCE_DIR}/include")
 target_link_libraries(file_to_map LINK_PUBLIC seqan3::seqan3)
 
 
-#################### aligner #######################
-add_library(aligner aligner.cpp)
-target_include_directories( aligner PRIVATE "${CMAKE_SOURCE_DIR}/include")
-target_link_libraries(aligner LINK_PUBLIC seqan3::seqan3
+#################### scanner #######################
+#add_library(scanner scanner.cpp)
+#target_include_directories( scanner PRIVATE "${CMAKE_SOURCE_DIR}/include")
+#target_link_libraries(scanner LINK_PUBLIC seqan3::seqan3
+#                                          arg_parse
+#                                          file_to_map
+#                                          )
+
+#################### indexer #######################
+add_library(indexer fm_indexer.cpp)
+target_include_directories( indexer PRIVATE "${CMAKE_SOURCE_DIR}/include")
+target_link_libraries(indexer LINK_PUBLIC seqan3::seqan3
                                           arg_parse
                                           file_to_map
                                           )
@@ -44,7 +52,8 @@ target_link_libraries(aligner LINK_PUBLIC seqan3::seqan3
 add_executable (speq main.cpp)
 target_include_directories(speq PRIVATE "${CMAKE_SOURCE_DIR}/include")
 target_link_libraries(speq LINK_PUBLIC  arg_parse 
-                                        aligner 
+                                        indexer
+#                                        scanner 
                                         seqan3::seqan3
                                         )
 
