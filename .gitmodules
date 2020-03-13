@@ -1,3 +1,6 @@
 [submodule "deps/seqan3"]
 	path = deps/seqan3
 	url = https://github.com/seqan/seqan3.git
+[submodule "deps/ThreadPool"]
+	path = deps/ThreadPool
+	url = https://github.com/progschj/ThreadPool

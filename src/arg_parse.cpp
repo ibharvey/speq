@@ -85,7 +85,7 @@ speq::args::cmd_arguments speq::args::get_index_arguments(seqan3::argument_parse
     parser.add_section("Misc");
     parser.add_option(args.chunk, 'c', "chunk", "Chunk size when pulling the input file(s).");
     parser.add_option(args.kmer, 'k', "kmer", "Size of the kmer used in searching the references.");
-    //parser.add_option(args.threads, 't', "threads", "Number of threads to use.", seqan3::option_spec::DEFAULT, seqan3::arithmetic_range_validator{1,static_cast<double>(std::thread::hardware_concurrency())});
+    parser.add_option(args.threads, 't', "threads", "Number of threads to use.", seqan3::option_spec::DEFAULT, seqan3::arithmetic_range_validator{1,static_cast<double>(std::thread::hardware_concurrency())});
 
     try
     {

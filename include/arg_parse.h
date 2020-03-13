@@ -18,7 +18,7 @@ namespace speq
             bool is_force{};
             u_int threads{std::thread::hardware_concurrency()};
             u_int chunk{10000};
-            u_int8_t kmer{17};
+            u_int8_t kmer{30};
             bool is_indexer{false};
             bool is_scanner{false};
             bool is_parsed{false};
