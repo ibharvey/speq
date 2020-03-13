@@ -23,7 +23,11 @@ SPeQ requires Seqan3 and its respective dependencies. FYI this includes a fairly
 
 ## Algorithm
 
-TotalNumberOfKmers * Prob(NoSequencingErrorsPerKmer) * **VariantPercentage** * PercentageOfUniqueKmers = NumberOfUniqueKmers
+TotalNumberOfKmers * Prob(NoSequencingErrorsPerKmer) = NumberOfPerfectKmers
+
+NumberOfPerfectKmers * **VariantPercentage** = NumberOfVariantSpecificKmers
+
+NumberOfVariantSpecificKmers * PercentageOfUniqueKmersInVariant = NumberOfVariantUniqueKmers
 
 - TotalReads is known for a given FAST(AQ) file.
 - PercentUniqueKmers can be found by iterating a sliding kmer window over each reference sequence, back-checking against all reference sequences.
