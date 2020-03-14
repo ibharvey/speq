@@ -1,4 +1,4 @@
-#include <scanner.h>
+#include <khash_scanner.h>
 
 
 using seqan3::operator""_dna5;

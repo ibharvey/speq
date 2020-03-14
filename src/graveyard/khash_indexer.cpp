@@ -1,4 +1,4 @@
-#include <indexer.h>
+#include <khash_indexer.h>
 
 
 void speq::kmer_hash::get_unique_kmers(  const cmd_arguments args,

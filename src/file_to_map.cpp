@@ -23,7 +23,7 @@ void speq::file_to_map(   std::filesystem::path a_path,
 {
     std::ifstream inf(a_path);
     std::string line,variant,token;
-    size_t isolate_index; size_t variant_index = -1;
+    size_t variant_index = -1;
     if(inf.is_open())
     {
         while(std::getline(inf,line))
