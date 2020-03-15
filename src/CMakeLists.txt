@@ -17,9 +17,17 @@ include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 find_package (ZLIB REQUIRED)
 
 ################## Add seqan3 #####################
-set(SeqAn3_DIR "${CMAKE_SOURCE_DIR}/deps/seqan3/build_system")
-find_package (SeqAn3 REQUIRED)
+option(USING_DOCKER OFF)
+if(USING_DOCKER)
+	set(SeqAn3_DIR "/deps/seqan3/build_system")
+	set(THREAD_POOL_INCLUDE "/deps/ThreadPool")
+else()
+	set(SeqAn3_DIR "${CMAKE_SOURCE_DIR}/deps/seqan3/build_system")
+	set(THREAD_POOL_INCLUDE "${CMAKE_SOURCE_DIR}/deps/ThreadPool")
+endif(USING_DOCKER)
+unset(USING_DOCKER CACHE)
 
+find_package (SeqAn3 REQUIRED)
 
 #################### arg_parse #######################
 add_library(arg_parse arg_parse.cpp)
@@ -43,7 +51,7 @@ target_link_libraries(file_to_map LINK_PUBLIC seqan3::seqan3)
 #################### indexer #######################
 add_library(indexer fm_indexer.cpp)
 target_include_directories( indexer PRIVATE "${CMAKE_SOURCE_DIR}/include"
-                                            "${CMAKE_SOURCE_DIR}/deps/ThreadPool")
+					    "${THREAD_POOL_INCLUDE}")
 target_link_libraries(indexer LINK_PUBLIC seqan3::seqan3
                                           arg_parse
                                           file_to_map
@@ -52,7 +60,7 @@ target_link_libraries(indexer LINK_PUBLIC seqan3::seqan3
 #################### speq  #######################
 add_executable (speq main.cpp)
 target_include_directories(speq PRIVATE "${CMAKE_SOURCE_DIR}/include"
-                                        "${CMAKE_SOURCE_DIR}/deps/ThreadPool")
+					"${THREAD_POOL_INCLUDE}")
 target_link_libraries(speq LINK_PUBLIC  arg_parse 
                                         indexer
 #                                        scanner 
