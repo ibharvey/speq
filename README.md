@@ -12,11 +12,11 @@ git clone --recursive https://github.com/ibharvey/speq
 cd speq
 docker build . -t speq
 ```
-The benefit being that docker will pull all of the necessary dependencies into the separate container, giving you less of a headache.
+The benefit being that docker will pull all of the necessary dependencies into a separate container from your OS, giving you less of a headache.
 
-To run speq through the Docker image, use:
+To run speq through this Docker image, use:
 ```
-docker run speq [options]
+docker run speq [index|scan|all] [options]
 ```
 
 ### With CMake
@@ -37,9 +37,9 @@ SPeQ requires Seqan3 and its respective dependencies. FYI this includes a fairly
 
 To run speq following CMake installation, use either:
 ```
-speq [options]
+speq [index|scan|all] [options]
 #or
-./speq [options]
+./speq [index|scan|all] [options]
 ```
 Depending on how you installed the program.
 
