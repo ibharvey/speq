@@ -1,0 +1,7 @@
+FROM ubuntu:bionic
+
+WORKDIR /bin
+
+COPY --from=ubuntu:seqan3 /speq/build/src/speq ./
+
+ENTRYPOINT ["./speq"]
