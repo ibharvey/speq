@@ -52,7 +52,9 @@ void speq::fm::count_unique_kmers_per_group(
         auto a_seq = *it;
         pool_results.emplace_back(
             a_pool.enqueue
-            ([a_seq, double_group_scaffolds, group_names, scaffold_counter, args, index, config]
+            // I would think passing by reference would keep the memory costs of the program lower
+            ([&]
+            //([a_seq, double_group_scaffolds, group_names, scaffold_counter, args, index, config]
                 {
                     std::vector<std::size_t> a_total_kmers_per_group(group_names.size(),0);
                     std::vector<std::size_t> a_unique_kmers_per_group(group_names.size(),0);

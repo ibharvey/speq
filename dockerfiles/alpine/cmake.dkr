@@ -1,0 +1,16 @@
+FROM alpine:latest
+
+RUN apk add cmake make g++ gcc libc-dev dpkg-dev autoconf libtool \
+		zlib-dev bzip2-dev
+
+WORKDIR /speq
+
+COPY include/ /speq/include/
+COPY src/ /speq/src/
+COPY deps/ /deps/
+COPY CMakeLists.txt /speq/
+
+WORKDIR /speq/build
+
+RUN cmake -DUSING_DOCKER=ON .. && make
+

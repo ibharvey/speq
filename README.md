@@ -5,12 +5,11 @@ Metagenomic sequencing studies can contain DNA from multiple species, which are 
 
 
 ## Installation
-### With Docker
+### With Docker (from source)
 If you are using a Linux/Mac distribution and have a Docker daemon running, you can install with:
 ```
 git clone --recursive https://github.com/ibharvey/speq
-cd speq
-docker build . -t speq
+bash speq/dockerfiles/alpine/setup.sh speq/
 ```
 The benefit being that docker will pull all of the necessary dependencies into a separate container from your OS, giving you less of a headache.
 
@@ -19,29 +18,23 @@ To run speq through this Docker image, use:
 docker run speq [index|scan|all] [options]
 ```
 
-### With CMake
+### With CMake (from source)
 ```
 git clone --recursive https://github.com/ibharvey/speq
 cd speq
 mkdir -p build
 cd build
 cmake ..
-#Builds a binary located at ..../speq/build/src/speq
 make
-#Installs the binary to be used directly from the commandline
-#   (i.e. 'speq [options]' instead of ./speq [options]
 sudo make install
 
 ```
-SPeQ requires Seqan3 and its respective dependencies. FYI this includes a fairly new compiler. I have only successfully worked with Seqan3 on Ubuntu 18.04.4.
+SPeQ requires Seqan3 and its respective dependencies. FYI this includes a fairly new compiler. 
 
-To run speq following CMake installation, use either:
+To run speq following CMake installation, use:
 ```
 speq [index|scan|all] [options]
-#or
-./speq [index|scan|all] [options]
 ```
-Depending on how you installed the program.
 
 ## Algorithm
 

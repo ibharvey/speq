@@ -1,0 +1,9 @@
+FROM alpine:latest
+
+RUN apk add libbz2 libstdc++ libgcc
+
+WORKDIR /bin
+
+COPY --from=alpine:seqan3 /speq/build/src/speq ./
+
+ENTRYPOINT ["./speq"]
