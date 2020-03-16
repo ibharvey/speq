@@ -41,17 +41,18 @@ target_link_libraries(file_to_map LINK_PUBLIC seqan3::seqan3)
 
 
 #################### scanner #######################
-#add_library(scanner scanner.cpp)
-#target_include_directories( scanner PRIVATE "${CMAKE_SOURCE_DIR}/include")
-#target_link_libraries(scanner LINK_PUBLIC seqan3::seqan3
-#                                          arg_parse
-#                                          file_to_map
-#                                          )
+add_library(scanner fm_scanner.cpp)
+target_include_directories( scanner PRIVATE  "${CMAKE_SOURCE_DIR}/include"
+                                              "${THREAD_POOL_INCLUDE}")
+target_link_libraries(scanner LINK_PUBLIC seqan3::seqan3
+                                          arg_parse
+                                          file_to_map
+                                          )
 
 #################### indexer #######################
 add_library(indexer fm_indexer.cpp)
-target_include_directories( indexer PRIVATE "${CMAKE_SOURCE_DIR}/include"
-					    "${THREAD_POOL_INCLUDE}")
+target_include_directories( indexer PRIVATE   "${CMAKE_SOURCE_DIR}/include"
+					                                    "${THREAD_POOL_INCLUDE}")
 target_link_libraries(indexer LINK_PUBLIC seqan3::seqan3
                                           arg_parse
                                           file_to_map
@@ -59,8 +60,8 @@ target_link_libraries(indexer LINK_PUBLIC seqan3::seqan3
 
 #################### speq  #######################
 add_executable (speq main.cpp)
-target_include_directories(speq PRIVATE "${CMAKE_SOURCE_DIR}/include"
-					"${THREAD_POOL_INCLUDE}")
+target_include_directories(speq PRIVATE   "${CMAKE_SOURCE_DIR}/include"
+					                                "${THREAD_POOL_INCLUDE}")
 target_link_libraries(speq LINK_PUBLIC  arg_parse 
                                         indexer
 #                                        scanner 

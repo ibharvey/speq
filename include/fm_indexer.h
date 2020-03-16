@@ -16,6 +16,7 @@
 #include <seqan3/range/views/complement.hpp>
 
 #include <cereal/archives/binary.hpp>
+#include <cereal/types/vector.hpp>
 
 #include <range/v3/view/transform.hpp>
 #include <range/v3/to_container.hpp>
@@ -38,12 +39,18 @@ namespace speq
 {
     namespace fm
     {
-        int index(  const speq::args::cmd_arguments args);
+        int index(  speq::args::cmd_arguments & args);
 
         void count_unique_kmers_per_group(  
-            const speq::args::cmd_arguments args, 
-            const std::vector<std::string> group_names,
-            const std::vector<int> group_scaffolds
+            speq::args::cmd_arguments & args, 
+            const std::vector<std::string> & group_names,
+            const std::vector<int> & group_scaffolds
+        );
+
+        void fast_count_unique_kmers_per_group(
+            speq::args::cmd_arguments & args,
+            const std::vector<std::string> & group_names,
+            const std::vector<int> & group_scaffolds
         );
 
     }
