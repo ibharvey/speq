@@ -64,7 +64,7 @@ target_include_directories(speq PRIVATE   "${CMAKE_SOURCE_DIR}/include"
 					                                "${THREAD_POOL_INCLUDE}")
 target_link_libraries(speq LINK_PUBLIC  arg_parse 
                                         indexer
-#                                        scanner 
+                                        scanner 
                                         seqan3::seqan3
                                         )
 

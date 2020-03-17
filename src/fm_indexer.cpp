@@ -53,8 +53,8 @@ void speq::fm::count_unique_kmers_per_group(
         pool_results.emplace_back(
             a_pool.enqueue
             // I would think passing by reference would keep the memory costs of the program lower
-            ([&]
-            //([a_seq, double_group_scaffolds, group_names, scaffold_counter, args, index, config]
+            //([&]
+            ([a_seq, double_group_scaffolds, group_names, scaffold_counter, args, index, config]
                 {
                     std::vector<std::size_t> a_total_kmers_per_group(group_names.size(),0);
                     std::vector<std::size_t> a_unique_kmers_per_group(group_names.size(),0);
@@ -115,10 +115,11 @@ void speq::fm::count_unique_kmers_per_group(
         args.io_file_index.replace_extension(".vec");
         std::ofstream os{args.io_file_index, std::ios::binary};
         cereal::BinaryOutputArchive oarchive{os};
-        oarchive(   group_names, 
-                    double_group_scaffolds, 
-                    unique_kmers_per_group,
-                    total_kmers_per_group);
+        oarchive(args.kmer);
+        oarchive(group_names);
+        oarchive(double_group_scaffolds);
+        oarchive(unique_kmers_per_group);
+        oarchive(total_kmers_per_group);
     }
     seqan3::debug_stream << unique_kmers_per_group << "\n";
     seqan3::debug_stream << total_kmers_per_group << "\n";
@@ -187,9 +188,10 @@ void speq::fm::fast_count_unique_kmers_per_group(
                 seqan3::search_cfg::parallel{1};
     std::size_t scaffold_counter = 0;
     std::vector<std::unordered_set<std::size_t>> previously_hit_per_scaffold(double_group_scaffolds.size());
+    std::vector<std::size_t> total_kmers_per_group(group_names.size(),0);
+    std::vector<std::size_t> unique_kmers_per_group(group_names.size(),0);
     for(auto it = std::begin(fnr_ref_seqs); it != std::end(fnr_ref_seqs); ++it)
     {
-        int this_group = double_group_scaffolds[scaffold_counter];
         auto already_seen_hits = previously_hit_per_scaffold[scaffold_counter];
 
         auto ref_to_kmers = *it | ranges::views::sliding(args.kmer)
@@ -317,7 +319,8 @@ void speq::fm::fast_count_unique_kmers_per_group(
         args.io_file_index.replace_extension(".vec");
         std::ofstream os{args.io_file_index, std::ios::binary};
         cereal::BinaryOutputArchive oarchive{os};
-        oarchive(   group_names, 
+        oarchive(   args.kmer,
+                    group_names, 
                     double_group_scaffolds, 
                     unique_kmers_per_group,
                     total_kmers_per_group);

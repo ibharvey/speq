@@ -6,8 +6,13 @@ speq::args::cmd_arguments speq::args::get_all_arguments(seqan3::argument_parser 
     args.is_indexer = true;
     args.is_scanner = true;
  
+    parser.info.author = "Ian B Harvey";
+    parser.info.short_description = "Index reference sequences and scan against reads in one command.";
+    parser.info.synopsis = {"speq all [options]"};
+    parser.info.version = "0.1.0";
+
     parser.add_section("Input/Output Arguments");
-    parser.add_option(args.in_file_reads_path_1,'1',"foward", "A fast(aq) file of the forward reads.");
+    parser.add_option(args.in_file_reads_path_1,'1',"forward", "A fast(aq) file of the forward reads.");
     parser.add_option(args.in_file_reads_path_2,'2',"reverse", "A fast(aq) file of the reverse reads.");
     parser.add_option(args.in_file_references,'r',"reference", "The reference sequences in FASTA format.");
     parser.add_option(args.in_file_references_groups,'g',"groups", "Groupings of reference sequences.");
@@ -18,7 +23,7 @@ speq::args::cmd_arguments speq::args::get_all_arguments(seqan3::argument_parser 
     parser.add_section("Misc");
     parser.add_option(args.kmer, 'k', "kmer", "Size of the kmer used in searching the references.");
     parser.add_option(args.chunk, 'c', "chunk", "Chunk size when pulling the input file(s).");
-    //parser.add_option(args.threads, 't', "threads", "Number of threads to use.", seqan3::option_spec::DEFAULT, seqan3::arithmetic_range_validator{1,static_cast<double>(std::thread::hardware_concurrency())});
+    parser.add_option(args.threads, 't', "threads", "Number of threads to use.", seqan3::option_spec::DEFAULT, seqan3::arithmetic_range_validator{1,static_cast<double>(std::thread::hardware_concurrency())});
 
     try
     {
@@ -32,7 +37,7 @@ speq::args::cmd_arguments speq::args::get_all_arguments(seqan3::argument_parser 
     }
     catch (seqan3::argument_parser_error const & ext)
     {
-        seqan3::debug_stream << "speq scan | argument parsing error:  " << ext.what() << "\n";
+        seqan3::debug_stream << "speq all | argument parsing error:  " << ext.what() << "\n";
         return args;
     }
 }
@@ -41,9 +46,14 @@ speq::args::cmd_arguments speq::args::get_scan_arguments(seqan3::argument_parser
 {
     speq::args::cmd_arguments args{};
     args.is_scanner = true;
- 
+    
+    parser.info.author = "Ian B Harvey";
+    parser.info.short_description = "Scan reads against a pre-built reference index.";
+    parser.info.synopsis = {"speq scan [options]"};
+    parser.info.version = "0.1.0";
+
     parser.add_section("Input/Output Arguments");
-    parser.add_option(args.in_file_reads_path_1,'1',"foward", "A fast(aq) file of the forward reads.");
+    parser.add_option(args.in_file_reads_path_1,'1',"forward", "A fast(aq) file of the forward reads.");
     parser.add_option(args.in_file_reads_path_2,'2',"reverse", "A fast(aq) file of the reverse reads.");
     parser.add_option(args.io_file_index, 'x', "index", "Input index file-name prefix.");
     parser.add_option(args.out_file_path, 'o', "output", "Output file of percentages.");
@@ -51,7 +61,7 @@ speq::args::cmd_arguments speq::args::get_scan_arguments(seqan3::argument_parser
 
     parser.add_section("Misc");
     parser.add_option(args.chunk, 'c', "chunk", "Chunk size when pulling the input file(s).");
-    //parser.add_option(args.threads, 't', "threads", "Number of threads to use.", seqan3::option_spec::DEFAULT, seqan3::arithmetic_range_validator{1,static_cast<double>(std::thread::hardware_concurrency())});
+    parser.add_option(args.threads, 't', "threads", "Number of threads to use.", seqan3::option_spec::DEFAULT, seqan3::arithmetic_range_validator{1,static_cast<double>(std::thread::hardware_concurrency())});
 
     try
     {
@@ -75,6 +85,11 @@ speq::args::cmd_arguments speq::args::get_index_arguments(seqan3::argument_parse
 {
     speq::args::cmd_arguments args{};
     args.is_indexer = true;
+
+    parser.info.author = "Ian B Harvey";
+    parser.info.short_description = "Index reference genomes/sequences.";
+    parser.info.synopsis = {"speq index [options]"};
+    parser.info.version = "0.1.0";
 
     parser.add_section("Input/Output Arguments");
     parser.add_option(args.in_file_references,'r',"reference", "The reference sequences in FASTA format.");
@@ -106,14 +121,24 @@ speq::args::cmd_arguments speq::args::get_index_arguments(seqan3::argument_parse
 
 speq::args::cmd_arguments speq::args::initialize_argument_parser( int argc, char ** argv)
 {
-    seqan3::argument_parser top_level_parser{"speq", argc, argv, true, {"index", "scan"}};
+    seqan3::argument_parser top_level_parser{"speq", argc, argv, true, {"index", "scan", "all"}};
     
     top_level_parser.info.app_name = "speq";
     top_level_parser.info.author = "Ian B Harvey";
     top_level_parser.info.short_description = "Species PErcent Quantifier";
-    top_level_parser.info.synopsis = {"./speq [subprogram | options]"};
-    top_level_parser.info.version = "0.1";
-
+    top_level_parser.info.synopsis = {"speq [index|scan|all] [options]"};
+    top_level_parser.info.version = "0.1.0";
+    try
+    {
+        top_level_parser.parse();
+    }
+    catch(seqan3::argument_parser_error const & err)
+    {
+        seqan3::debug_stream << "SPeQ Error: " << err.what() << "\n";
+        speq::args::cmd_arguments args;
+        return args;
+    }
+    
     seqan3::argument_parser & sub_parser = top_level_parser.get_sub_parser();
     if(sub_parser.info.app_name == std::string_view{"speq-all"})
     {
@@ -135,23 +160,26 @@ speq::args::cmd_arguments speq::args::initialize_argument_parser( int argc, char
 
 void speq::args::check_in_file(std::filesystem::path & a_path)
 {
-    // Check the input file #1
-    if(a_path.is_relative())
+    if(!a_path.empty())
     {
-        if(std::filesystem::exists(std::filesystem::current_path() / a_path))
+        if(a_path.is_relative())
         {
-            a_path = std::filesystem::current_path() / a_path;
-        }
-        else
-        {
-            throw seqan3::validation_error(seqan3::detail::to_string( "The relative-path file ", a_path, " was not found."));
-        }
-    }else{
-        if(!std::filesystem::exists(a_path))
-        {
-            throw seqan3::validation_error(seqan3::detail::to_string( "The full-path file ", a_path, " was not found."));
+            if(std::filesystem::exists(std::filesystem::current_path() / a_path))
+            {
+                a_path = std::filesystem::current_path() / a_path;
+            }
+            else
+            {
+                throw seqan3::validation_error(seqan3::detail::to_string( "The relative-path file ", a_path, " was not found."));
+            }
+        }else{
+            if(!std::filesystem::exists(a_path))
+            {
+                throw seqan3::validation_error(seqan3::detail::to_string( "The full-path file ", a_path, " was not found."));
+            }
         }
     }
+    
 }
 
 void speq::args::check_out_file(std::filesystem::path & a_path, const bool is_force)
