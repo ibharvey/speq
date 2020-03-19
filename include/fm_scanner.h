@@ -18,6 +18,7 @@
 
 #include <seqan3/range/views/chunk.hpp>
 #include <seqan3/range/views/deep.hpp>
+#include <seqan3/range/views/zip.hpp>
 
 #include <seqan3/range/views/async_input_buffer.hpp>
 
@@ -29,6 +30,7 @@
 #include <range/v3/view/sliding.hpp>
 #include <range/v3/distance.hpp>
 #include <range/v3/begin_end.hpp>
+#include <range/v3/view/concat.hpp>
 
 #include <vector>
 #include <fstream>
@@ -36,7 +38,6 @@
 #include <atomic>
 #include <future>
 
-#include <tuple>
 
 
 namespace speq

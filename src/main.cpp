@@ -31,8 +31,7 @@ int main(int argc, char ** argv)
             }
             else
             {
-                seqan3::debug_stream << "Path2: " << args.in_file_reads_path_2 << "\n";
-                //speq::scan::two(args);
+		        speq::scan::async_two(args);
             }
             
         }
