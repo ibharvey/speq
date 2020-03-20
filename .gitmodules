@@ -4,3 +4,6 @@
 [submodule "deps/ThreadPool"]
 	path = deps/ThreadPool
 	url = https://github.com/progschj/ThreadPool
+[submodule "deps/boost-cmake"]
+	path = deps/boost-cmake
+	url = https://github.com/Orphis/boost-cmake.git
