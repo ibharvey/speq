@@ -1,8 +1,8 @@
 #include <fm_indexer.h>
 
 // This function needs to be re-written to avoid 
-// containers. Would dramatically help both
-// CPU and memory overhead.
+// loading all genomes into containers at once. 
+// Would dramatically help both CPU and memory overhead.
 seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection>
 speq::fm::generate_fm_index(speq::args::cmd_arguments & args)
 {
@@ -101,7 +101,7 @@ void speq::fm::async_count_unique_kmers_per_group(
     };
 
     std::vector<std::future<std::tuple<std::vector<std::size_t>, std::vector<std::size_t>>>> futures;
-    for(std::size_t thread = 0; thread < args.threads; ++thread)
+    for(std::size_t thread = 0; thread < args.threads - 1; ++thread)
     {
         futures.push_back(std::async(std::launch::async, worker));
     }

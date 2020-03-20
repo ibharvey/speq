@@ -4,6 +4,7 @@ project(speq VERSION 0.1.0)
 include(CTest)
 enable_testing()
 
+############### Add source ##################
 add_subdirectory(src)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})

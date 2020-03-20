@@ -30,13 +30,14 @@
 #include <range/v3/view/sliding.hpp>
 #include <range/v3/distance.hpp>
 #include <range/v3/begin_end.hpp>
-#include <range/v3/view/concat.hpp>
+#include <range/v3/numeric/accumulate.hpp>
 
 #include <vector>
 #include <fstream>
 #include <string>
 #include <atomic>
 #include <future>
+#include <math.h>
 
 
 
