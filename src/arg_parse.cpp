@@ -22,8 +22,10 @@ speq::args::cmd_arguments speq::args::get_all_arguments(seqan3::argument_parser 
 
     parser.add_section("Misc");
     parser.add_option(args.kmer, 'k', "kmer", "Size of the kmer used in searching the references.");
+    parser.add_option(args.phred_cutoff, '\0', "phred-cutoff", "Single nucleotide phred score cutoff value for a kmer to be included in analysis.");
+    parser.add_option(args.fixed_accuracy, '\0', "fixed-accuracy", "Force program to use a specific accuracy per basepair. Default uses Phred.", seqan3::option_spec::DEFAULT, seqan3::arithmetic_range_validator{0.0,1.0});
     //parser.add_option(args.chunk, 'c', "chunk", "Chunk size when pulling the input file(s).");
-    parser.add_option(args.threads, 't', "threads", "Number of threads to use.", seqan3::option_spec::DEFAULT, seqan3::arithmetic_range_validator{1,static_cast<double>(std::thread::hardware_concurrency())});
+    parser.add_option(args.threads, 't', "threads", "Number of threads to use.", seqan3::option_spec::DEFAULT, seqan3::arithmetic_range_validator{2,static_cast<double>(std::thread::hardware_concurrency())});
 
     try
     {
@@ -60,8 +62,11 @@ speq::args::cmd_arguments speq::args::get_scan_arguments(seqan3::argument_parser
     parser.add_flag(args.is_force, 'f', "force", "Force the program to overwrite an existing file.");
 
     parser.add_section("Misc");
+    parser.add_option(args.kmer, 'k', "kmer", "Size of the kmer used in searching the references.");
+    parser.add_option(args.phred_cutoff, '\0', "phred-cutoff", "Single nucleotide phred score cutoff value for a kmer to be included in analysis.");
+    parser.add_option(args.fixed_accuracy, '\0', "fixed-accuracy", "Force program to use a specific accuracy per basepair", seqan3::option_spec::DEFAULT, seqan3::arithmetic_range_validator{0.0,1.0});
     //parser.add_option(args.chunk, 'c', "chunk", "Chunk size when pulling the input file(s).");
-    parser.add_option(args.threads, 't', "threads", "Number of threads to use.", seqan3::option_spec::DEFAULT, seqan3::arithmetic_range_validator{1,static_cast<double>(std::thread::hardware_concurrency())});
+    parser.add_option(args.threads, 't', "threads", "Number of threads to use.", seqan3::option_spec::DEFAULT, seqan3::arithmetic_range_validator{2,static_cast<double>(std::thread::hardware_concurrency())});
 
     try
     {
@@ -99,8 +104,7 @@ speq::args::cmd_arguments speq::args::get_index_arguments(seqan3::argument_parse
 
     parser.add_section("Misc");
     //parser.add_option(args.chunk, 'c', "chunk", "Chunk size when pulling the input file(s).");
-    parser.add_option(args.kmer, 'k', "kmer", "Size of the kmer used in searching the references.");
-    parser.add_option(args.threads, 't', "threads", "Number of threads to use.", seqan3::option_spec::DEFAULT, seqan3::arithmetic_range_validator{1,static_cast<double>(std::thread::hardware_concurrency())});
+    parser.add_option(args.threads, 't', "threads", "Number of threads to use.", seqan3::option_spec::DEFAULT, seqan3::arithmetic_range_validator{2,static_cast<double>(std::thread::hardware_concurrency())});
 
     try
     {

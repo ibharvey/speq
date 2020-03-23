@@ -16,9 +16,11 @@ namespace speq
             std::filesystem::path io_file_index{"output.idx"};
             std::filesystem::path out_file_path{"output.txt"};
             bool is_force{};
-            unsigned int threads{std::thread::hardware_concurrency()};
+            unsigned int threads{2};
             unsigned int chunk{10000};
-            unsigned int kmer{30};
+            unsigned int kmer{70};
+            unsigned int phred_cutoff{30};
+            double fixed_accuracy{0.0};
             bool is_indexer{false};
             bool is_scanner{false};
             bool is_parsed{false};

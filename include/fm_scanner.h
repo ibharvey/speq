@@ -2,10 +2,12 @@
 
 #include <arg_parse.h>
 
-#include <ThreadPool.h>
-
 #include <cereal/types/vector.hpp>
 #include <cereal/archives/binary.hpp>
+#include <cereal/types/chrono.hpp>
+#include <cereal/types/string.hpp>
+
+#include <ThreadPool.h>
 
 #include <seqan3/io/sequence_file/input.hpp>
 #include <seqan3/search/fm_index/fm_index.hpp>
@@ -19,18 +21,22 @@
 #include <seqan3/range/views/chunk.hpp>
 #include <seqan3/range/views/deep.hpp>
 #include <seqan3/range/views/zip.hpp>
+#include <seqan3/range/views/complement.hpp>
 
 #include <seqan3/range/views/async_input_buffer.hpp>
 
-#include <cereal/archives/binary.hpp>
-#include <cereal/types/vector.hpp>
-
 #include <range/v3/view/transform.hpp>
+#include <range/v3/view/filter.hpp>
+#include <range/v3/view/reverse.hpp>
 #include <range/v3/to_container.hpp>
 #include <range/v3/view/sliding.hpp>
 #include <range/v3/distance.hpp>
 #include <range/v3/begin_end.hpp>
+#include <range/v3/view/concat.hpp>
 #include <range/v3/numeric/accumulate.hpp>
+#include <range/v3/view/for_each.hpp>
+#include <range/v3/algorithm/min.hpp>
+
 
 #include <vector>
 #include <fstream>
@@ -39,15 +45,34 @@
 #include <future>
 #include <math.h>
 
+#include <iostream>
+
 
 
 namespace speq
 {
     namespace scan
     {
+
         int one(        speq::args::cmd_arguments & args);
-        int async_one(  speq::args::cmd_arguments & args);
+        int async_one(  speq::args::cmd_arguments & args, double percent_perfect = 0.0);
+        int _async_one_with_global_error_rate(  speq::args::cmd_arguments & args, double percent_perfect);
+        int _async_one_with_local_error_rate(   speq::args::cmd_arguments & args);
+
         int two(        speq::args::cmd_arguments & args);
-        int async_two(  speq::args::cmd_arguments & args);
+        int async_two(  speq::args::cmd_arguments & args, double percent_perfect = 0.0);
+        int _async_two_with_global_error_rate(  speq::args::cmd_arguments & args, double percent_perfect);
+        int _async_two_with_local_error_rate(   speq::args::cmd_arguments & args);
+
+        void _async_count_unique_kmers_per_group(
+            speq::args::cmd_arguments & args,
+            const std::filesystem::file_time_type & index_file_time,
+            const std::vector<std::string> & group_names,
+            const std::vector<int> & group_scaffolds,
+            const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & index,
+            std::vector<std::size_t> & unique_kmers,
+            std::vector<std::size_t> & total_kmers        
+        );
+
     }
 }

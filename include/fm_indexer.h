@@ -3,6 +3,11 @@
 #include <arg_parse.h>
 #include <file_to_map.h>
 
+#include <cereal/types/vector.hpp>
+#include <cereal/archives/binary.hpp>
+#include <cereal/types/chrono.hpp>
+#include <cereal/types/string.hpp>
+
 #include <ThreadPool.h>
 
 #include <seqan3/core/debug_stream.hpp>
@@ -17,8 +22,6 @@
 
 #include <seqan3/range/views/async_input_buffer.hpp>
 
-#include <cereal/archives/binary.hpp>
-#include <cereal/types/vector.hpp>
 
 #include <range/v3/view/transform.hpp>
 #include <range/v3/to_container.hpp>
@@ -37,6 +40,7 @@
 #include <algorithm>
 #include <future>
 #include <tuple>
+#include <chrono>
 
 
 
@@ -46,29 +50,15 @@ namespace speq
     {
         int index(  speq::args::cmd_arguments & args);
 
-        seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> generate_fm_index(speq::args::cmd_arguments & args);
         
-
-        void async_count_unique_kmers_per_group(
+        void generate_fm_index(
             speq::args::cmd_arguments & args,
-            const std::vector<std::string> & group_names,
-            const std::vector<int> & group_scaffolds,
-            const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & index
-        );
-
-        void count_unique_kmers_per_group(  
-            speq::args::cmd_arguments & args, 
-            const std::vector<std::string> & group_names,
-            const std::vector<int> & group_scaffolds,
-            const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & index
-        );
-
-        void fast_count_unique_kmers_per_group(
-            speq::args::cmd_arguments & args,
+            const std::filesystem::file_time_type & scaffold_file_time,
+            const std::filesystem::file_time_type & group_file_time,
             const std::vector<std::string> & group_names,
             const std::vector<int> & group_scaffolds
         );
-
+        
     }
     
 }
