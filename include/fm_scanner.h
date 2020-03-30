@@ -74,5 +74,12 @@ namespace speq
             std::vector<std::size_t> & total_kmers        
         );
 
+        std::vector<double> unique_to_percent(
+            std::vector<double> unique_in_reads,
+            std::size_t total_in_reads,
+            std::vector<std::size_t> unique_in_refs,
+            std::vector<std::size_t> total_in_refs
+        );
+
     }
 }
