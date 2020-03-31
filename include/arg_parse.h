@@ -21,6 +21,7 @@ namespace speq
             unsigned int kmer{70};
             unsigned int phred_cutoff{30};
             double fixed_accuracy{0.0};
+            double precision{1e-6};
             bool is_indexer{false};
             bool is_scanner{false};
             bool is_parsed{false};

@@ -235,7 +235,63 @@ int speq::scan::_async_one_with_global_error_rate(  speq::args::cmd_arguments & 
     seqan3::debug_stream << percent_each_group << "\n";
     seqan3::debug_stream << unique_totals << "\n";
     seqan3::debug_stream << total_kmers << "\t" << ambiguous_reads << "\n";
+    std::vector<double> diff_perc(group_names.size(),1.0);
+    while(*std::max_element(diff_perc.begin(), diff_perc.end()) > args.precision)
+    {
+        // Calculate the experimental "total_kmers_per_group"
+        std::vector<double> next_tkpg = speq::scan::_async_one_estimate_kmer_per_group
+        (
+            percent_each_group,
+            args,
+            group_names,
+            double_group_scaffolds,
+            fm_index
+        );
+        // Use the experimental total_kmers_per_group to calculate 
+        // the experimental percent_each_group
+        auto next_percent_each_group = speq::scan::unique_to_percent(
+            unique_totals,
+            total_kmers,
+            unique_totals,
+            next_tkpg
+        );
+
+        
+        for(std::size_t i = 0; i < group_names.size(); ++i)
+        {
+            diff_perc[i] = abs(next_percent_each_group[i] - percent_each_group[i]);
+        }
+        percent_each_group = next_percent_each_group;
+        seqan3::debug_stream << percent_each_group << "\n";
+        seqan3::debug_stream << next_tkpg << "\n\n";
+    }
     return 1;
+}
+
+std::vector<double> speq::scan::unique_to_percent(
+    std::vector<double> unique_in_reads,
+    std::size_t total_in_reads,
+    std::vector<std::size_t> unique_in_refs,
+    std::vector<std::size_t> total_in_refs
+)
+{
+    std::vector<double> d_unique_in_refs;
+    std::copy(unique_in_refs.begin(), 
+        unique_in_refs.end(), 
+        d_unique_in_refs.begin()
+    );
+
+    std::vector<double> d_total_in_refs;
+    std::copy(total_in_refs.begin(), 
+        total_in_refs.end(), 
+        d_total_in_refs.begin()
+    );
+    return speq::scan::unique_to_percent(
+        unique_in_reads,
+        total_in_reads,
+        d_unique_in_refs,
+        d_total_in_refs
+    );
 }
 
 int speq::scan::_async_one_with_local_error_rate(   speq::args::cmd_arguments & args)
@@ -446,6 +502,36 @@ int speq::scan::_async_one_with_local_error_rate(   speq::args::cmd_arguments & 
     seqan3::debug_stream << percent_each_group << "\n";
     seqan3::debug_stream << unique_totals << "\n";
     seqan3::debug_stream << total_kmers << "\t" << ambiguous_reads << "\n";
+    std::vector<double> diff_perc(group_names.size(),1.0);
+    while(*std::max_element(diff_perc.begin(), diff_perc.end()) > args.precision)
+    {
+        // Calculate the experimental "total_kmers_per_group"
+        std::vector<double> next_tkpg = speq::scan::_async_one_estimate_kmer_per_group
+        (
+            percent_each_group,
+            args,
+            group_names,
+            double_group_scaffolds,
+            fm_index
+        );
+        // Use the experimental total_kmers_per_group to calculate 
+        // the experimental percent_each_group
+        auto next_percent_each_group = speq::scan::unique_to_percent(
+            unique_totals,
+            total_kmers,
+            unique_totals,
+            next_tkpg
+        );
+
+        
+        for(std::size_t i = 0; i < group_names.size(); ++i)
+        {
+            diff_perc[i] = abs(next_percent_each_group[i] - percent_each_group[i]);
+        }
+        percent_each_group = next_percent_each_group;
+        seqan3::debug_stream << percent_each_group << "\n";
+        seqan3::debug_stream << next_tkpg << "\n\n";
+    }
     return 1;
 }
 
@@ -495,6 +581,7 @@ int speq::scan::_async_two_with_global_error_rate(    speq::args::cmd_arguments 
     auto holder = args.io_file_index.filename();
     std::string fn = args.io_file_index.stem();
     args.io_file_index.replace_filename(fn + "_" + std::to_string(args.kmer) + "mer.dat");
+    auto second_holder = args.io_file_index.stem();
     // Import or build the index data file (.dat)
     std::vector<std::size_t> total_kmers_per_group(group_names.size(),0);
     std::vector<std::size_t> unique_kmers_per_group(group_names.size(),0);
@@ -505,14 +592,13 @@ int speq::scan::_async_two_with_global_error_rate(    speq::args::cmd_arguments 
             std::ifstream is{args.io_file_index, std::ios::binary};
             cereal::BinaryInputArchive iarchive{is};
             iarchive(index_file_time);
-            iarchive(unique_kmers_per_group);
-            iarchive(total_kmers_per_group);
         }
+        args.io_file_index.replace_filename(holder);
         if(old_index_file_time != index_file_time)
         {
             speq::scan::_async_count_unique_kmers_per_group(
                 args,
-                index_file_time,
+                old_index_file_time,
                 group_names,
                 group_scaffolds,
                 fm_index,
@@ -520,12 +606,26 @@ int speq::scan::_async_two_with_global_error_rate(    speq::args::cmd_arguments 
                 total_kmers_per_group
             );
         }
+        else
+        {
+            {
+                args.io_file_index.replace_filename(second_holder);
+                std::ifstream is{args.io_file_index, std::ios::binary};
+                cereal::BinaryInputArchive iarchive{is};
+                iarchive(index_file_time);
+                iarchive(unique_kmers_per_group);
+                iarchive(total_kmers_per_group);
+                args.io_file_index.replace_filename(holder);
+            }
+        }
+        
     }
     else
     {
+        args.io_file_index.replace_filename(holder);
         speq::scan::_async_count_unique_kmers_per_group(
             args,
-            index_file_time,
+            old_index_file_time,
             group_names,
             group_scaffolds,
             fm_index,
@@ -533,7 +633,6 @@ int speq::scan::_async_two_with_global_error_rate(    speq::args::cmd_arguments 
             total_kmers_per_group
         );
     }
-    args.io_file_index.replace_filename(holder);
 
     // Import the reads
     seqan3::sequence_file_input fin1{args.in_file_reads_path_1};
@@ -547,54 +646,72 @@ int speq::scan::_async_two_with_global_error_rate(    speq::args::cmd_arguments 
 
     std::atomic<std::size_t> ambiguous_reads = 0;
     std::atomic<std::size_t> total_kmers = 0;
-    auto worker = [&v, &ambiguous_reads, &total_kmers, fm_index, 
-                    group_names, double_group_scaffolds, config, args] ()
+    auto worker = [&, fm_index, group_names, double_group_scaffolds, config, args] ()
     {
         std::vector<std::size_t> unique_kmers(group_names.size(),0);
+        auto do_a_count = [&](auto & results, auto & qmers, int & which_group, bool & is_ambiguous)
+        {
+            auto q_it = ranges::begin(qmers);
+            for(auto r_it = ranges::begin(results); r_it != ranges::end(results); ++r_it)
+            {
+                auto result = *r_it;
+                auto qesult = *q_it;
+                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff))
+                {
+                    ++total_kmers;
+                    int which_hit  = -1;
+                    for(auto & res : result)
+                    {
+                        if(which_hit == -1)
+                        {
+                            which_hit = double_group_scaffolds[res.first];
+                        }
+                        else if(which_hit != double_group_scaffolds[res.first])
+                        {
+                            which_hit = -2;
+                            break;
+                        }
+                    }
+                    if(which_hit >= 0) 
+                    {
+                        ++unique_kmers[which_hit];
+                        // For now, still count unique kmers on an ambiguous read
+                        //      because I don't have a justification to ignore it.
+                        if(which_group >= 0 && which_group != which_hit)
+                        {
+                            is_ambiguous = true;
+                        }
+                        else
+                        {
+                            which_group = which_hit;
+                        }
+                    }  
+                }
+                ++q_it; 
+            }
+        };
         for(auto && [rec1, rec2] : v)
         {
             bool is_ambiguous = false;
             int which_group = -1;
-            auto seq1 = seqan3::get<seqan3::field::seq>(rec1);
-            auto kmers1 = seq1 | ranges::views::sliding(args.kmer);
-            auto seq2 = seqan3::get<seqan3::field::seq>(rec2);
-            auto kmers2 = seq2 | ranges::views::sliding(args.kmer);
-            auto all_kmers = ranges::views::concat(kmers1, kmers2);
-            auto results = search(all_kmers, fm_index, config);
-            for(auto r_it = ranges::begin(results); r_it != ranges::end(results); ++r_it)
-            {
-                ++total_kmers;
-                auto result = *r_it;
-                int which_hit  = -1;
-                for(auto & res : result)
-                {
-                    if(which_hit == -1)
-                    {
-                        which_hit = double_group_scaffolds[res.first];
-                    }
-                    else if(which_hit != double_group_scaffolds[res.first])
-                    {
-                        which_hit = -2;
-                        break;
-                    }
-                }
-                if(which_hit >= 0) 
-                {
-                    ++unique_kmers[which_hit];
-                    // For now, still count unique kmers on an ambiguous read
-                    //      because I don't have a justification to ignore it.
-                    if(which_group >= 0 && which_group != which_hit)
-                    {
-                        is_ambiguous = true;
-                    }
-                    else
-                    {
-                        which_group = which_hit;
-                    }
-                }   
-            }
+            
+            auto f_seq = seqan3::get<seqan3::field::seq>(rec1);
+            auto f_qual = seqan3::get<seqan3::field::qual>(rec1);
+            auto f_kmers = f_seq | ranges::views::sliding(args.kmer);
+            auto f_qmers = f_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
+            auto f_results = search(f_kmers, fm_index, config);
+            do_a_count(f_results, f_qmers, which_group, is_ambiguous);
+
+            auto r_seq = seqan3::get<seqan3::field::seq>(rec2);
+            auto r_qual = seqan3::get<seqan3::field::qual>(rec2);
+            auto r_kmers = r_seq | ranges::views::sliding(args.kmer);
+            auto r_qmers = r_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
+            auto r_results = search(r_kmers, fm_index, config);
+            do_a_count(r_results, r_qmers, which_group, is_ambiguous);
+
             if(is_ambiguous) ++ambiguous_reads;
         }
+
         return unique_kmers;
     };
 
@@ -604,18 +721,58 @@ int speq::scan::_async_two_with_global_error_rate(    speq::args::cmd_arguments 
         futures.push_back(std::async(std::launch::async, worker));
     }
 
-    std::vector<std::size_t> unique_totals(group_names.size(),0);
+    std::vector<double> unique_totals(group_names.size(),0.0);
     for(auto &e : futures)
     {
         auto a_unique = e.get();
         for(std::size_t i = 0; i < a_unique.size(); ++i)
         {
-            unique_totals[i] += a_unique[i];
+            unique_totals[i] += static_cast<double>(a_unique[i]) / percent_perfect;
         }
     }
+    
+    auto percent_each_group = speq::scan::unique_to_percent(
+        unique_totals,
+        total_kmers,
+        unique_kmers_per_group,
+        total_kmers_per_group
+    );
 
+    seqan3::debug_stream << percent_each_group << "\n";
     seqan3::debug_stream << unique_totals << "\n";
     seqan3::debug_stream << total_kmers << "\t" << ambiguous_reads << "\n";
+
+    std::vector<double> diff_perc(group_names.size(),1.0);
+    while(*std::max_element(diff_perc.begin(), diff_perc.end()) > args.precision)
+    {
+        // Calculate the experimental "total_kmers_per_group"
+        std::vector<double> next_tkpg = speq::scan::_async_two_estimate_kmer_per_group
+        (
+            percent_each_group,
+            args,
+            group_names,
+            double_group_scaffolds,
+            fm_index
+        );
+        // Use the experimental total_kmers_per_group to calculate 
+        // the experimental percent_each_group
+        auto next_percent_each_group = speq::scan::unique_to_percent(
+            unique_totals,
+            total_kmers,
+            unique_totals,
+            next_tkpg
+        );
+
+        
+        for(std::size_t i = 0; i < group_names.size(); ++i)
+        {
+            diff_perc[i] = abs(next_percent_each_group[i] - percent_each_group[i]);
+        }
+        percent_each_group = next_percent_each_group;
+        seqan3::debug_stream << percent_each_group << "\n";
+        seqan3::debug_stream << next_tkpg << "\n\n";
+    }
+
     return 1;
 }
 
@@ -735,66 +892,67 @@ int speq::scan::_async_two_with_local_error_rate(    speq::args::cmd_arguments &
                     group_names, double_group_scaffolds, config, args] ()
     {
         std::vector<double> unique_kmers(group_names.size(),0);
+        
+        auto do_a_count = [&](auto & results, auto & qmers, int & which_group, bool & is_ambiguous)
+        {
+            auto q_it = ranges::begin(qmers);
+            for(auto r_it = ranges::begin(results); r_it != ranges::end(results); ++r_it)
+            {
+                auto result = *r_it;
+                auto qesult = *q_it;
+                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff))
+                {
+                    ++total_kmers;
+                    int which_hit  = -1;
+                    for(auto & res : result)
+                    {
+                        if(which_hit == -1)
+                        {
+                            which_hit = double_group_scaffolds[res.first];
+                        }
+                        else if(which_hit != double_group_scaffolds[res.first])
+                        {
+                            which_hit = -2;
+                            break;
+                        }
+                    }
+                    if(which_hit >= 0) 
+                    {
+                        auto qavg = ranges::accumulate(qesult, 1.0, [](double a, double b){return a / (1.0 - 1.0/pow(10.0,b/10.0));});
+                        unique_kmers[which_hit] += qavg;
+                        // For now, still count unique kmers on an ambiguous read
+                        //      because I don't have a justification to ignore it.
+                        if(which_group >= 0 && which_group != which_hit)
+                        {
+                            is_ambiguous = true;
+                        }
+                        else
+                        {
+                            which_group = which_hit;
+                        }
+                    }  
+                }
+                ++q_it; 
+            }
+        };
         for(auto && [rec1, rec2] : v)
         {
             bool is_ambiguous = false;
             int which_group = -1;
             
-            auto do_a_count = [&](auto & results, auto & qmers)
-            {
-                auto q_it = ranges::begin(qmers);
-                for(auto r_it = ranges::begin(results); r_it != ranges::end(results); ++r_it)
-                {
-                    auto result = *r_it;
-                    auto qesult = *q_it;
-                    if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff))
-                    {
-                        ++total_kmers;
-                        int which_hit  = -1;
-                        for(auto & res : result)
-                        {
-                            if(which_hit == -1)
-                            {
-                                which_hit = double_group_scaffolds[res.first];
-                            }
-                            else if(which_hit != double_group_scaffolds[res.first])
-                            {
-                                which_hit = -2;
-                                break;
-                            }
-                        }
-                        if(which_hit >= 0) 
-                        {
-                            auto qavg = ranges::accumulate(qesult, 1.0, [](double a, double b){return a / (1.0 - 1.0/pow(10.0,b/10.0));});
-                            unique_kmers[which_hit] += qavg;
-                            // For now, still count unique kmers on an ambiguous read
-                            //      because I don't have a justification to ignore it.
-                            if(which_group >= 0 && which_group != which_hit)
-                            {
-                                is_ambiguous = true;
-                            }
-                            else
-                            {
-                                which_group = which_hit;
-                            }
-                        }  
-                    }
-                    ++q_it; 
-                }
-            };
             auto f_seq = seqan3::get<seqan3::field::seq>(rec1);
             auto f_qual = seqan3::get<seqan3::field::qual>(rec1);
             auto f_kmers = f_seq | ranges::views::sliding(args.kmer);
             auto f_qmers = f_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
             auto f_results = search(f_kmers, fm_index, config);
-            do_a_count(f_results, f_qmers);
+            do_a_count(f_results, f_qmers, which_group, is_ambiguous);
 
             auto r_seq = seqan3::get<seqan3::field::seq>(rec2);
             auto r_qual = seqan3::get<seqan3::field::qual>(rec2);
             auto r_kmers = r_seq | ranges::views::sliding(args.kmer);
             auto r_qmers = r_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
             auto r_results = search(r_kmers, fm_index, config);
-            do_a_count(r_results, r_qmers);
+            do_a_count(r_results, r_qmers, which_group, is_ambiguous);
 
             if(is_ambiguous) ++ambiguous_reads;
         }
@@ -826,23 +984,220 @@ int speq::scan::_async_two_with_local_error_rate(    speq::args::cmd_arguments &
     seqan3::debug_stream << percent_each_group << "\n";
     seqan3::debug_stream << unique_totals << "\n";
     seqan3::debug_stream << total_kmers << "\t" << ambiguous_reads << "\n";
+
+    std::vector<double> diff_perc(group_names.size(),1.0);
+    while(*std::max_element(diff_perc.begin(), diff_perc.end()) > args.precision)
+    {
+        // Calculate the experimental "total_kmers_per_group"
+        std::vector<double> next_tkpg = speq::scan::_async_two_estimate_kmer_per_group
+        (
+            percent_each_group,
+            args,
+            group_names,
+            double_group_scaffolds,
+            fm_index
+        );
+        // Use the experimental total_kmers_per_group to calculate 
+        // the experimental percent_each_group
+        auto next_percent_each_group = speq::scan::unique_to_percent(
+            unique_totals,
+            total_kmers,
+            unique_totals,
+            next_tkpg
+        );
+
+        
+        for(std::size_t i = 0; i < group_names.size(); ++i)
+        {
+            diff_perc[i] = abs(next_percent_each_group[i] - percent_each_group[i]);
+        }
+        percent_each_group = next_percent_each_group;
+        seqan3::debug_stream << percent_each_group << "\n";
+        seqan3::debug_stream << next_tkpg << "\n\n";
+    }
     return 1;
+}
+
+std::vector<double> speq::scan::_async_one_estimate_kmer_per_group(
+    const std::vector<double> & percent_per_group,
+    const speq::args::cmd_arguments & args,
+    const std::vector<std::string> & group_names,
+    const std::vector<int> & double_group_scaffolds,
+    const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index
+)
+{
+    seqan3::sequence_file_input fin{args.in_file_reads_path_1};
+
+    auto v = fin | seqan3::views::async_input_buffer(args.threads * 2);
+    auto config =   seqan3::search_cfg::max_error{seqan3::search_cfg::total{0}} |
+            seqan3::search_cfg::output{seqan3::search_cfg::text_position};
+    auto worker = [&, fm_index, group_names, double_group_scaffolds, config, args]()
+    {
+        std::vector<double> hits_per_group(group_names.size(),0.0);
+        auto do_a_count = [&](auto & results, auto & qmers)
+        {
+            auto q_it = ranges::begin(qmers);
+            for(auto r_it = ranges::begin(results); r_it != ranges::end(results); ++r_it)
+            {
+                auto result = *r_it;
+                auto qesult = *q_it;
+                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff))
+                {
+                    std::vector<double> hits_per_group_int(group_names.size(), 0.0);
+                    for(auto & res : result)
+                    {
+                        ++hits_per_group_int[double_group_scaffolds[res.first]];
+                    }
+                    // Based on the percent_per_group and number of hits for this kmer per group
+                    //  we can estimate the representation of this kmer between each group
+                    for(std::size_t i = 0; i < group_names.size(); ++i)
+                    {
+                        hits_per_group[i] = hits_per_group_int[i] * percent_per_group[i];
+                    }
+                    // The total sum of the normalized groups
+                    double normalized_sum = std::accumulate(hits_per_group.begin(), hits_per_group.end(), 0.0);
+                    // Divide the norm_hits by norm_sum to get the fraction of this kmer assigned to each group
+                    for(std::size_t i = 0; i < group_names.size(); ++i)
+                    {
+                        hits_per_group[i] /= normalized_sum;
+                    }
+                }
+                ++q_it;
+            }
+        };
+        
+        for(auto & rec : v)
+        {
+            
+            auto f_seq = seqan3::get<seqan3::field::seq>(rec);
+            auto f_qual = seqan3::get<seqan3::field::qual>(rec);
+            auto f_kmers = f_seq | ranges::views::sliding(args.kmer);
+            auto f_qmers = f_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
+            auto f_results = search(f_kmers, fm_index, config);
+            do_a_count(f_results, f_qmers);
+        }
+        return hits_per_group;
+    };
+    
+    std::vector<std::future<std::vector<double>>> futures;
+    for(std::size_t thread = 0; thread < args.threads - 1; ++thread)
+    {
+        futures.push_back(std::async(std::launch::async, worker));
+    }
+
+    std::vector<double> hits_per_group_totals(group_names.size(), 0.0);
+    for(auto &e : futures)
+    {
+        auto a_hits_per_group = e.get();
+        for(std::size_t i = 0; i < a_hits_per_group.size(); ++i)
+        {
+            hits_per_group_totals[i] += a_hits_per_group[i];
+        }
+    }
+    return hits_per_group_totals;
+}
+
+std::vector<double> speq::scan::_async_two_estimate_kmer_per_group(
+    const std::vector<double> & percent_per_group,
+    const speq::args::cmd_arguments & args,
+    const std::vector<std::string> & group_names,
+    const std::vector<int> & double_group_scaffolds,
+    const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index
+)
+{
+    seqan3::sequence_file_input fin1{args.in_file_reads_path_1};
+    seqan3::sequence_file_input fin2{args.in_file_reads_path_2};
+
+    auto combined = seqan3::views::zip(fin1, fin2);
+    auto v = combined | seqan3::views::async_input_buffer(args.threads * 2);
+    auto config =   seqan3::search_cfg::max_error{seqan3::search_cfg::total{0}} |
+            seqan3::search_cfg::output{seqan3::search_cfg::text_position};
+    auto worker = [&, fm_index, group_names, double_group_scaffolds, config, args]()
+    {
+        std::vector<double> hits_per_group(group_names.size(),0.0);
+        auto do_a_count = [&](auto & results, auto & qmers)
+        {
+            auto q_it = ranges::begin(qmers);
+            for(auto r_it = ranges::begin(results); r_it != ranges::end(results); ++r_it)
+            {
+                auto result = *r_it;
+                auto qesult = *q_it;
+                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff))
+                {
+                    std::vector<double> hits_per_group_int(group_names.size(), 0.0);
+                    for(auto & res : result)
+                    {
+                        ++hits_per_group_int[double_group_scaffolds[res.first]];
+                    }
+                    // Based on the percent_per_group and number of hits for this kmer per group
+                    //  we can estimate the representation of this kmer between each group
+                    for(std::size_t i = 0; i < group_names.size(); ++i)
+                    {
+                        hits_per_group[i] = hits_per_group_int[i] * percent_per_group[i];
+                    }
+                    // The total sum of the normalized groups
+                    double normalized_sum = std::accumulate(hits_per_group.begin(), hits_per_group.end(), 0.0);
+                    // Divide the norm_hits by norm_sum to get the fraction of this kmer assigned to each group
+                    for(std::size_t i = 0; i < group_names.size(); ++i)
+                    {
+                        hits_per_group[i] /= normalized_sum;
+                    }
+                }
+                ++q_it;
+            }
+        };
+        
+        for(auto && [rec1, rec2] : v)
+        {
+            
+            auto f_seq = seqan3::get<seqan3::field::seq>(rec1);
+            auto f_qual = seqan3::get<seqan3::field::qual>(rec1);
+            auto f_kmers = f_seq | ranges::views::sliding(args.kmer);
+            auto f_qmers = f_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
+            auto f_results = search(f_kmers, fm_index, config);
+            do_a_count(f_results, f_qmers);
+
+            auto r_seq = seqan3::get<seqan3::field::seq>(rec2);
+            auto r_qual = seqan3::get<seqan3::field::qual>(rec2);
+            auto r_kmers = r_seq | ranges::views::sliding(args.kmer);
+            auto r_qmers = r_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
+            auto r_results = search(r_kmers, fm_index, config);
+            do_a_count(r_results, r_qmers);
+        }
+        return hits_per_group;
+    };
+    
+    std::vector<std::future<std::vector<double>>> futures;
+    for(std::size_t thread = 0; thread < args.threads - 1; ++thread)
+    {
+        futures.push_back(std::async(std::launch::async, worker));
+    }
+
+    std::vector<double> hits_per_group_totals(group_names.size(), 0.0);
+    for(auto &e : futures)
+    {
+        auto a_hits_per_group = e.get();
+        for(std::size_t i = 0; i < a_hits_per_group.size(); ++i)
+        {
+            hits_per_group_totals[i] += a_hits_per_group[i];
+        }
+    }
+    return hits_per_group_totals;
 }
 
 std::vector<double> speq::scan::unique_to_percent(
     std::vector<double> unique_in_reads,
     std::size_t total_in_reads,
-    std::vector<std::size_t> unique_in_refs,
-    std::vector<std::size_t> total_in_refs
+    std::vector<double> unique_in_refs,
+    std::vector<double> total_in_refs
 )
 {
     std::vector<double> output(unique_in_refs.size(),0.0);
-    double d_total_in_reads = static_cast<double>(total_in_reads);
     for(std::size_t i = 0; i < unique_in_refs.size(); ++i)
     {
         // Get the percentage of each reference genome that is unique
-        double percent_uniques = static_cast<double>(unique_in_refs[i]) / static_cast<double>(total_in_refs[i]);
-        output[i] = unique_in_reads[i] / d_total_in_reads / percent_uniques;
+        double percent_uniques = unique_in_refs[i] / total_in_refs[i];
+        output[i] = unique_in_reads[i] / static_cast<double>(total_in_reads) / percent_uniques;
     }
     return output;
 }

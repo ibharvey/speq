@@ -44,6 +44,9 @@
 #include <atomic>
 #include <future>
 #include <math.h>
+#include <cmath>
+#include <algorithm>
+#include <numeric>
 
 #include <iostream>
 
@@ -73,12 +76,35 @@ namespace speq
             std::vector<std::size_t> & unique_kmers,
             std::vector<std::size_t> & total_kmers        
         );
-
+        
         std::vector<double> unique_to_percent(
             std::vector<double> unique_in_reads,
             std::size_t total_in_reads,
             std::vector<std::size_t> unique_in_refs,
             std::vector<std::size_t> total_in_refs
+        );
+
+        std::vector<double> unique_to_percent(
+            std::vector<double> unique_in_reads,
+            std::size_t total_in_reads,
+            std::vector<double> unique_in_refs,
+            std::vector<double> total_in_refs
+        );
+
+        std::vector<double> _async_one_estimate_kmer_per_group(
+            const std::vector<double> & percent_per_group,
+            const speq::args::cmd_arguments & args,
+            const std::vector<std::string> & group_names,
+            const std::vector<int> & double_group_scaffolds,
+            const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index
+        );
+
+        std::vector<double> _async_two_estimate_kmer_per_group(
+            const std::vector<double> & percent_per_group,
+            const speq::args::cmd_arguments & args,
+            const std::vector<std::string> & group_names,
+            const std::vector<int> & double_group_scaffolds,
+            const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index
         );
 
     }
