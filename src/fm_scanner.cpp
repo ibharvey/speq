@@ -275,13 +275,13 @@ std::vector<double> speq::scan::unique_to_percent(
     std::vector<std::size_t> total_in_refs
 )
 {
-    std::vector<double> d_unique_in_refs;
+    std::vector<double> d_unique_in_refs(unique_in_refs.size(),0.0);
     std::copy(unique_in_refs.begin(), 
         unique_in_refs.end(), 
         d_unique_in_refs.begin()
     );
 
-    std::vector<double> d_total_in_refs;
+    std::vector<double> d_total_in_refs(total_in_refs.size(),0.0);
     std::copy(total_in_refs.begin(), 
         total_in_refs.end(), 
         d_total_in_refs.begin()
@@ -393,7 +393,6 @@ int speq::scan::_async_one_with_local_error_rate(   speq::args::cmd_arguments & 
             total_kmers_per_group
         );
     }
-
     // Import the reads
     seqan3::sequence_file_input fin{args.in_file_reads_path_1};
     auto config =   seqan3::search_cfg::max_error{seqan3::search_cfg::total{0}} |
@@ -410,7 +409,6 @@ int speq::scan::_async_one_with_local_error_rate(   speq::args::cmd_arguments & 
         {
             bool is_ambiguous = false;
             int which_group = -1;
-            
             auto do_a_count = [&](auto & results, auto & qmers)
             {
                 auto q_it = ranges::begin(qmers);
@@ -475,13 +473,11 @@ int speq::scan::_async_one_with_local_error_rate(   speq::args::cmd_arguments & 
         }
         return unique_kmers;
     };
-
     std::vector<std::future<std::vector<double>>> futures;
     for(std::size_t thread = 0; thread < args.threads - 1; ++thread)
     {
         futures.push_back(std::async(std::launch::async, worker));
     }
-
     std::vector<double> unique_totals(group_names.size(),0);
     for(auto &e : futures)
     {
@@ -491,7 +487,6 @@ int speq::scan::_async_one_with_local_error_rate(   speq::args::cmd_arguments & 
             unique_totals[i] += a_unique[i];
         }
     }
-
     auto percent_each_group = speq::scan::unique_to_percent(
         unique_totals,
         total_kmers,
@@ -522,15 +517,14 @@ int speq::scan::_async_one_with_local_error_rate(   speq::args::cmd_arguments & 
             unique_totals,
             next_tkpg
         );
-
         
         for(std::size_t i = 0; i < group_names.size(); ++i)
         {
             diff_perc[i] = abs(next_percent_each_group[i] - percent_each_group[i]);
         }
         percent_each_group = next_percent_each_group;
-        seqan3::debug_stream << percent_each_group << "\n";
-        seqan3::debug_stream << next_tkpg << "\n\n";
+        seqan3::debug_stream << "Percent of each group: " << percent_each_group << "\n";
+        seqan3::debug_stream << "Total Kmers per group: " << next_tkpg << "\n\n";
     }
     return 1;
 }
@@ -1046,20 +1040,25 @@ std::vector<double> speq::scan::_async_one_estimate_kmer_per_group(
                     std::vector<double> hits_per_group_int(group_names.size(), 0.0);
                     for(auto & res : result)
                     {
-                        ++hits_per_group_int[double_group_scaffolds[res.first]];
+                        hits_per_group_int[double_group_scaffolds[res.first]] += 1.0;
                     }
                     // Based on the percent_per_group and number of hits for this kmer per group
                     //  we can estimate the representation of this kmer between each group
+                    std::vector<double> a_hit_per_group(group_names.size(),0.0);
                     for(std::size_t i = 0; i < group_names.size(); ++i)
                     {
-                        hits_per_group[i] = hits_per_group_int[i] * percent_per_group[i];
+                        a_hit_per_group[i] = hits_per_group_int[i] * percent_per_group[i];
                     }
                     // The total sum of the normalized groups
-                    double normalized_sum = std::accumulate(hits_per_group.begin(), hits_per_group.end(), 0.0);
-                    // Divide the norm_hits by norm_sum to get the fraction of this kmer assigned to each group
-                    for(std::size_t i = 0; i < group_names.size(); ++i)
+                    double normalized_sum = std::accumulate(a_hit_per_group.begin(), a_hit_per_group.end(), 0.0);
+                    if(normalized_sum > 0.0)
                     {
-                        hits_per_group[i] /= normalized_sum;
+                        // Divide the norm_hits by norm_sum to get the fraction of this kmer assigned to each group
+                        for(std::size_t i = 0; i < group_names.size(); ++i)
+                        {
+                            a_hit_per_group[i] /= normalized_sum;
+                            hits_per_group[i] += a_hit_per_group[i];
+                        }
                     }
                 }
                 ++q_it;
@@ -1131,16 +1130,18 @@ std::vector<double> speq::scan::_async_two_estimate_kmer_per_group(
                     }
                     // Based on the percent_per_group and number of hits for this kmer per group
                     //  we can estimate the representation of this kmer between each group
+                    std::vector<double> a_hit_per_group(group_names.size(),0.0);
                     for(std::size_t i = 0; i < group_names.size(); ++i)
                     {
-                        hits_per_group[i] = hits_per_group_int[i] * percent_per_group[i];
+                        a_hit_per_group[i] = hits_per_group_int[i] * percent_per_group[i];
                     }
                     // The total sum of the normalized groups
-                    double normalized_sum = std::accumulate(hits_per_group.begin(), hits_per_group.end(), 0.0);
+                    double normalized_sum = std::accumulate(a_hit_per_group.begin(), a_hit_per_group.end(), 0.0);
                     // Divide the norm_hits by norm_sum to get the fraction of this kmer assigned to each group
                     for(std::size_t i = 0; i < group_names.size(); ++i)
                     {
-                        hits_per_group[i] /= normalized_sum;
+                        a_hit_per_group[i] /= normalized_sum;
+                        hits_per_group[i] += a_hit_per_group[i];
                     }
                 }
                 ++q_it;
