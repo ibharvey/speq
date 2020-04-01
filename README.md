@@ -3,6 +3,13 @@
 ## Rationale
 Metagenomic sequencing studies can contain DNA from multiple species, which are often relatively easy to distinguish. However, if a sample contains multiple variants of the same virus/organism, a large fraction of the reads may be synonymous in both variants. SPeQ only uses the polymorphisms that distinguish individual variants in order to sensitively quantify percentages of strains/variants.
 
+## Usage
+### SPeQ-Index
+Organize a directory so that each of its subdirectories is a genomic variant, and each FASTA/Q file in that subdirectory represents one isolate's sequence. 
+
+
+### SPeQ-Scan
+
 
 ## Installation
 ### With Docker (from source)

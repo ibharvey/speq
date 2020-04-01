@@ -58,12 +58,12 @@ namespace speq
     {
 
         int one(        speq::args::cmd_arguments & args);
-        int async_one(  speq::args::cmd_arguments & args, double percent_perfect = 0.0);
+        int async_one(  speq::args::cmd_arguments & args, double n_percent_perfect = 0.0);
         int _async_one_with_global_error_rate(  speq::args::cmd_arguments & args, double percent_perfect);
         int _async_one_with_local_error_rate(   speq::args::cmd_arguments & args);
 
         int two(        speq::args::cmd_arguments & args);
-        int async_two(  speq::args::cmd_arguments & args, double percent_perfect = 0.0);
+        int async_two(  speq::args::cmd_arguments & args, double n_percent_perfect = 0.0);
         int _async_two_with_global_error_rate(  speq::args::cmd_arguments & args, double percent_perfect);
         int _async_two_with_local_error_rate(   speq::args::cmd_arguments & args);
 

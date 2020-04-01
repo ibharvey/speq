@@ -1,26 +1,28 @@
 #include <fm_scanner.h>
 
-int speq::scan::async_one(    speq::args::cmd_arguments & args, double percent_perfect)
+int speq::scan::async_one(    speq::args::cmd_arguments & args, double n_percent_perfect)
 {
     // Choose whether to use the global or read-specific error rates
-    if(percent_perfect == 0.0)
+    if(n_percent_perfect == 0.0)
     {
         return speq::scan::_async_one_with_local_error_rate(args);
     }
     else
     {
+        double percent_perfect = pow(n_percent_perfect, args.kmer);
         return speq::scan::_async_one_with_global_error_rate(args, percent_perfect);
     }
 }
 
-int speq::scan::async_two(  speq::args::cmd_arguments & args, double percent_perfect)
+int speq::scan::async_two(  speq::args::cmd_arguments & args, double n_percent_perfect)
 {
-    if(percent_perfect == 0.0)
+    if(n_percent_perfect == 0.0)
     {
         return speq::scan::_async_two_with_local_error_rate(args);
     }
     else
     {
+        double percent_perfect = pow(n_percent_perfect, args.kmer);
         return speq::scan::_async_two_with_global_error_rate(args, percent_perfect);
     }
 }
@@ -1012,12 +1014,13 @@ int speq::scan::_async_two_with_local_error_rate(    speq::args::cmd_arguments &
     return 1;
 }
 
-std::vector<double> speq::scan::_async_one_estimate_kmer_per_group(
+std::vector<double> speq::scan::_async_one_global_estimate_kmer_per_group(
     const std::vector<double> & percent_per_group,
     const speq::args::cmd_arguments & args,
     const std::vector<std::string> & group_names,
     const std::vector<int> & double_group_scaffolds,
-    const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index
+    const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index,
+    const double percent_perfect
 )
 {
     seqan3::sequence_file_input fin{args.in_file_reads_path_1};
@@ -1038,9 +1041,10 @@ std::vector<double> speq::scan::_async_one_estimate_kmer_per_group(
                 if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff))
                 {
                     std::vector<double> hits_per_group_int(group_names.size(), 0.0);
+                    double temp_acc = 1.0 / percent_perfect;
                     for(auto & res : result)
                     {
-                        hits_per_group_int[double_group_scaffolds[res.first]] += 1.0;
+                        hits_per_group_int[double_group_scaffolds[res.first]] += temp_acc;
                     }
                     // Based on the percent_per_group and number of hits for this kmer per group
                     //  we can estimate the representation of this kmer between each group
@@ -1095,6 +1099,95 @@ std::vector<double> speq::scan::_async_one_estimate_kmer_per_group(
     }
     return hits_per_group_totals;
 }
+
+std::vector<double> speq::scan::_async_one_local_estimate_kmer_per_group(
+    const std::vector<double> & percent_per_group,
+    const speq::args::cmd_arguments & args,
+    const std::vector<std::string> & group_names,
+    const std::vector<int> & double_group_scaffolds,
+    const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index
+)
+{
+    seqan3::sequence_file_input fin{args.in_file_reads_path_1};
+
+    auto v = fin | seqan3::views::async_input_buffer(args.threads * 2);
+    auto config =   seqan3::search_cfg::max_error{seqan3::search_cfg::total{0}} |
+            seqan3::search_cfg::output{seqan3::search_cfg::text_position};
+    auto worker = [&, fm_index, group_names, double_group_scaffolds, config, args]()
+    {
+        std::vector<double> hits_per_group(group_names.size(),0.0);
+        auto do_a_count = [&](auto & results, auto & qmers)
+        {
+            auto q_it = ranges::begin(qmers);
+            for(auto r_it = ranges::begin(results); r_it != ranges::end(results); ++r_it)
+            {
+                auto result = *r_it;
+                auto qesult = *q_it;
+                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff))
+                {
+                    std::vector<double> hits_per_group_int(group_names.size(), 0.0);
+                    // Add an estimate of the "false negative" probability of this kmer
+                    auto qavg = ranges::accumulate(qesult, 1.0, [](double a, double b){return a / (1.0 - 1.0/pow(10.0,b/10.0));});
+                    // Subtract an estimate of the "false positive" probability of this kmer
+                    qavg -= (1.0 - ranges::accumulate(qesult, 1.0, [](double a, double b){return a * (1.0 - 1.0/pow(10.0,b/10.0));}));
+                    for(auto & res : result)
+                    {
+                        hits_per_group_int[double_group_scaffolds[res.first]] += qavg;
+                    }
+                    // Based on the percent_per_group and number of hits for this kmer per group
+                    //  we can estimate the representation of this kmer between each group
+                    std::vector<double> a_hit_per_group(group_names.size(),0.0);
+                    for(std::size_t i = 0; i < group_names.size(); ++i)
+                    {
+                        a_hit_per_group[i] = hits_per_group_int[i] * percent_per_group[i];
+                    }
+                    // The total sum of the normalized groups
+                    double normalized_sum = std::accumulate(a_hit_per_group.begin(), a_hit_per_group.end(), 0.0);
+                    if(normalized_sum > 0.0)
+                    {
+                        // Divide the norm_hits by norm_sum to get the fraction of this kmer assigned to each group
+                        for(std::size_t i = 0; i < group_names.size(); ++i)
+                        {
+                            a_hit_per_group[i] /= normalized_sum;
+                            hits_per_group[i] += a_hit_per_group[i];
+                        }
+                    }
+                }
+                ++q_it;
+            }
+        };
+        
+        for(auto & rec : v)
+        {
+            
+            auto f_seq = seqan3::get<seqan3::field::seq>(rec);
+            auto f_qual = seqan3::get<seqan3::field::qual>(rec);
+            auto f_kmers = f_seq | ranges::views::sliding(args.kmer);
+            auto f_qmers = f_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
+            auto f_results = search(f_kmers, fm_index, config);
+            do_a_count(f_results, f_qmers);
+        }
+        return hits_per_group;
+    };
+    
+    std::vector<std::future<std::vector<double>>> futures;
+    for(std::size_t thread = 0; thread < args.threads - 1; ++thread)
+    {
+        futures.push_back(std::async(std::launch::async, worker));
+    }
+
+    std::vector<double> hits_per_group_totals(group_names.size(), 0.0);
+    for(auto &e : futures)
+    {
+        auto a_hits_per_group = e.get();
+        for(std::size_t i = 0; i < a_hits_per_group.size(); ++i)
+        {
+            hits_per_group_totals[i] += a_hits_per_group[i];
+        }
+    }
+    return hits_per_group_totals;
+}
+
 
 std::vector<double> speq::scan::_async_two_estimate_kmer_per_group(
     const std::vector<double> & percent_per_group,
