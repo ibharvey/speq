@@ -58,12 +58,12 @@ namespace speq
     {
 
         int one(        speq::args::cmd_arguments & args);
-        int async_one(  speq::args::cmd_arguments & args, double n_percent_perfect = 0.0);
+        int async_one(  speq::args::cmd_arguments & args);
         int _async_one_with_global_error_rate(  speq::args::cmd_arguments & args, double percent_perfect);
         int _async_one_with_local_error_rate(   speq::args::cmd_arguments & args);
 
         int two(        speq::args::cmd_arguments & args);
-        int async_two(  speq::args::cmd_arguments & args, double n_percent_perfect = 0.0);
+        int async_two(  speq::args::cmd_arguments & args);
         int _async_two_with_global_error_rate(  speq::args::cmd_arguments & args, double percent_perfect);
         int _async_two_with_local_error_rate(   speq::args::cmd_arguments & args);
 
@@ -91,7 +91,16 @@ namespace speq
             std::vector<double> total_in_refs
         );
 
-        std::vector<double> _async_one_estimate_kmer_per_group(
+        std::vector<double> _async_one_global_estimate_kmer_per_group(
+            const std::vector<double> & percent_per_group,
+            const speq::args::cmd_arguments & args,
+            const std::vector<std::string> & group_names,
+            const std::vector<int> & double_group_scaffolds,
+            const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index,
+            const double percent_perfect
+        );
+
+        std::vector<double> _async_one_local_estimate_kmer_per_group(
             const std::vector<double> & percent_per_group,
             const speq::args::cmd_arguments & args,
             const std::vector<std::string> & group_names,
@@ -99,7 +108,16 @@ namespace speq
             const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index
         );
 
-        std::vector<double> _async_two_estimate_kmer_per_group(
+        std::vector<double> _async_two_global_estimate_kmer_per_group(
+            const std::vector<double> & percent_per_group,
+            const speq::args::cmd_arguments & args,
+            const std::vector<std::string> & group_names,
+            const std::vector<int> & double_group_scaffolds,
+            const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index,
+            const double percent_perfect
+        );
+
+        std::vector<double> _async_two_local_estimate_kmer_per_group(
             const std::vector<double> & percent_per_group,
             const speq::args::cmd_arguments & args,
             const std::vector<std::string> & group_names,

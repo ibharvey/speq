@@ -27,11 +27,11 @@ int main(int argc, char ** argv)
             // If there is only one file of reads
             if(args.in_file_reads_path_2.empty())
             {
-                speq::scan::async_one(args, args.fixed_accuracy);
+                speq::scan::async_one(args);
             }
             else
             {
-		        speq::scan::async_two(args, args.fixed_accuracy);
+		        speq::scan::async_two(args);
             }
             
         }
