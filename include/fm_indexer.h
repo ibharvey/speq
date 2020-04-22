@@ -8,8 +8,6 @@
 #include <cereal/types/chrono.hpp>
 #include <cereal/types/string.hpp>
 
-#include <ThreadPool.h>
-
 #include <seqan3/core/debug_stream.hpp>
 #include <seqan3/search/fm_index/fm_index.hpp>
 #include <seqan3/search/configuration/max_error.hpp>

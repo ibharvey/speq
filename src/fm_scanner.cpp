@@ -498,9 +498,8 @@ int speq::scan::_async_one_with_local_error_rate(   speq::args::cmd_arguments & 
         unique_kmers_per_group,
         total_kmers_per_group
     );
-
+    
     seqan3::debug_stream << percent_each_group << "\n";
-    seqan3::debug_stream << unique_totals << "\n";
     seqan3::debug_stream << total_kmers << "\t" << ambiguous_reads << "\n";
     std::vector<double> diff_perc(group_names.size(),1.0);
     while(*std::max_element(diff_perc.begin(), diff_perc.end()) > args.precision)
@@ -516,6 +515,7 @@ int speq::scan::_async_one_with_local_error_rate(   speq::args::cmd_arguments & 
         );
         // Use the experimental total_kmers_per_group to calculate 
         // the experimental percent_each_group
+        seqan3::debug_stream << "1: " << unique_totals << "\n2: " << total_kmers << "\n3: " << next_tkpg << "\n";
         auto next_percent_each_group = speq::scan::unique_to_percent(
             unique_totals,
             total_kmers,
@@ -1398,9 +1398,13 @@ std::vector<double> speq::scan::unique_to_percent(
     std::vector<double> output(unique_in_refs.size(),0.0);
     for(std::size_t i = 0; i < unique_in_refs.size(); ++i)
     {
-        // Get the percentage of each reference genome that is unique
-        double percent_uniques = unique_in_refs[i] / total_in_refs[i];
-        output[i] = unique_in_reads[i] / static_cast<double>(total_in_reads) / percent_uniques;
+        if(total_in_refs[i] > 0.0)
+        {
+            // Get the percentage of each reference genome that is unique
+            double percent_uniques = unique_in_refs[i] / total_in_refs[i];
+            output[i] = unique_in_reads[i] / static_cast<double>(total_in_reads) / percent_uniques;
+        }
+        
     }
     return output;
 }
