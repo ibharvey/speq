@@ -15,6 +15,7 @@
 #include <seqan3/search/configuration/output.hpp>
 #include <seqan3/search/algorithm/search.hpp>
 #include <seqan3/core/debug_stream.hpp>
+#include <seqan3/alphabet/nucleotide/dna5.hpp>
 
 #include <seqan3/range/views/chunk.hpp>
 #include <seqan3/range/views/deep.hpp>
@@ -34,6 +35,7 @@
 #include <range/v3/numeric/accumulate.hpp>
 #include <range/v3/view/for_each.hpp>
 #include <range/v3/algorithm/min.hpp>
+#include <range/v3/algorithm/find.hpp>
 
 
 #include <vector>

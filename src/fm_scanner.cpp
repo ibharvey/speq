@@ -1,5 +1,7 @@
 #include <fm_scanner.h>
 
+using seqan3::operator""_dna5;
+
 int speq::scan::async_one(    speq::args::cmd_arguments & args)
 {
     // Choose whether to use the global or read-specific error rates
@@ -146,15 +148,16 @@ int speq::scan::_async_one_with_global_error_rate(  speq::args::cmd_arguments & 
         {
             bool is_ambiguous = false;
             int which_group = -1;
-            
-            auto do_a_count = [&](auto & results, auto & qmers)
+            auto do_a_count = [&](auto & results, auto & kmers, auto & qmers)
             {
                 auto q_it = ranges::begin(qmers);
+                auto k_it = ranges::begin(kmers);
                 for(auto r_it = ranges::begin(results); r_it != ranges::end(results); ++r_it)
                 {
                     auto result = *r_it;
                     auto qesult = *q_it;
-                    if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff))
+                    auto kesult = *k_it;
+                    if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff) && ranges::find(kesult, 'N'_dna5)==ranges::end(kesult))
                     {
                         ++total_kmers;
                         int which_hit  = -1;
@@ -186,6 +189,7 @@ int speq::scan::_async_one_with_global_error_rate(  speq::args::cmd_arguments & 
                         }  
                     }
                     ++q_it; 
+                    ++k_it;
                 }
             };
             // Pull the sequences and quality scores
@@ -202,7 +206,7 @@ int speq::scan::_async_one_with_global_error_rate(  speq::args::cmd_arguments & 
             auto f_results = search(f_kmers, fm_index, config);
             // auto rc_results = search(rc_kmers, fm_index, config);
             // Count kmers based on kmer-specific quality scores
-            do_a_count(f_results, f_qmers);
+            do_a_count(f_results, f_kmers, f_qmers);
             // do_a_count(rc_results, rc_qmers);
             if(is_ambiguous) ++ambiguous_reads;
         }
@@ -414,14 +418,16 @@ int speq::scan::_async_one_with_local_error_rate(   speq::args::cmd_arguments & 
         {
             bool is_ambiguous = false;
             int which_group = -1;
-            auto do_a_count = [&](auto & results, auto & qmers)
+            auto do_a_count = [&](auto & results, auto & kmers, auto & qmers)
             {
                 auto q_it = ranges::begin(qmers);
+                auto k_it = ranges::begin(kmers);
                 for(auto r_it = ranges::begin(results); r_it != ranges::end(results); ++r_it)
                 {
                     auto result = *r_it;
                     auto qesult = *q_it;
-                    if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff))
+                    auto kesult = *k_it;
+                    if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff) && ranges::find(kesult, 'N'_dna5)==ranges::end(kesult))
                     {
                         ++total_kmers;
                         int which_hit  = -1;
@@ -455,6 +461,7 @@ int speq::scan::_async_one_with_local_error_rate(   speq::args::cmd_arguments & 
                         }  
                     }
                     ++q_it; 
+                    ++k_it;
                 }
             };
             // Pull the sequences and quality scores
@@ -465,14 +472,13 @@ int speq::scan::_async_one_with_local_error_rate(   speq::args::cmd_arguments & 
             // Produce kmers of the sequences and quality scores
             auto f_kmers = f_seq | ranges::views::sliding(args.kmer);
             auto f_qmers = f_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
-
             // auto rc_kmers = rc_seq | ranges::views::sliding(args.kmer);
             // auto rc_qmers = rc_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
             // Search against the kmers
             auto f_results = search(f_kmers, fm_index, config);
             // auto rc_results = search(rc_kmers, fm_index, config);
             // Count kmers based on kmer-specific quality scores
-            do_a_count(f_results, f_qmers);
+            do_a_count(f_results, f_kmers, f_qmers);
             // do_a_count(rc_results, rc_qmers);
             if(is_ambiguous) ++ambiguous_reads;
         }
@@ -648,14 +654,16 @@ int speq::scan::_async_two_with_global_error_rate(    speq::args::cmd_arguments 
     auto worker = [&, fm_index, group_names, double_group_scaffolds, config, args] ()
     {
         std::vector<std::size_t> unique_kmers(group_names.size(),0);
-        auto do_a_count = [&](auto & results, auto & qmers, int & which_group, bool & is_ambiguous)
+        auto do_a_count = [&](auto & results, auto & kmers, auto & qmers, int & which_group, bool & is_ambiguous)
         {
             auto q_it = ranges::begin(qmers);
+            auto k_it = ranges::begin(kmers);
             for(auto r_it = ranges::begin(results); r_it != ranges::end(results); ++r_it)
             {
                 auto result = *r_it;
                 auto qesult = *q_it;
-                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff))
+                auto kesult = *k_it;
+                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff) && ranges::find(kesult, 'N'_dna5)==ranges::end(kesult))
                 {
                     ++total_kmers;
                     int which_hit  = -1;
@@ -687,6 +695,7 @@ int speq::scan::_async_two_with_global_error_rate(    speq::args::cmd_arguments 
                     }  
                 }
                 ++q_it; 
+                ++k_it;
             }
         };
         for(auto && [rec1, rec2] : v)
@@ -699,14 +708,14 @@ int speq::scan::_async_two_with_global_error_rate(    speq::args::cmd_arguments 
             auto f_kmers = f_seq | ranges::views::sliding(args.kmer);
             auto f_qmers = f_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
             auto f_results = search(f_kmers, fm_index, config);
-            do_a_count(f_results, f_qmers, which_group, is_ambiguous);
+            do_a_count(f_results, f_kmers, f_qmers, which_group, is_ambiguous);
 
             auto r_seq = seqan3::get<seqan3::field::seq>(rec2);
             auto r_qual = seqan3::get<seqan3::field::qual>(rec2);
             auto r_kmers = r_seq | ranges::views::sliding(args.kmer);
             auto r_qmers = r_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
             auto r_results = search(r_kmers, fm_index, config);
-            do_a_count(r_results, r_qmers, which_group, is_ambiguous);
+            do_a_count(r_results, r_kmers, r_qmers, which_group, is_ambiguous);
 
             if(is_ambiguous) ++ambiguous_reads;
         }
@@ -893,14 +902,16 @@ int speq::scan::_async_two_with_local_error_rate(    speq::args::cmd_arguments &
     {
         std::vector<double> unique_kmers(group_names.size(),0);
         
-        auto do_a_count = [&](auto & results, auto & qmers, int & which_group, bool & is_ambiguous)
+        auto do_a_count = [&](auto & results, auto & kmers, auto & qmers, int & which_group, bool & is_ambiguous)
         {
             auto q_it = ranges::begin(qmers);
+            auto k_it = ranges::begin(kmers);
             for(auto r_it = ranges::begin(results); r_it != ranges::end(results); ++r_it)
             {
                 auto result = *r_it;
                 auto qesult = *q_it;
-                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff))
+                auto kesult = *k_it;
+                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff) && ranges::find(kesult, 'N'_dna5)==ranges::end(kesult))
                 {
                     ++total_kmers;
                     int which_hit  = -1;
@@ -933,6 +944,7 @@ int speq::scan::_async_two_with_local_error_rate(    speq::args::cmd_arguments &
                     }  
                 }
                 ++q_it; 
+                ++k_it;
             }
         };
         for(auto && [rec1, rec2] : v)
@@ -945,14 +957,14 @@ int speq::scan::_async_two_with_local_error_rate(    speq::args::cmd_arguments &
             auto f_kmers = f_seq | ranges::views::sliding(args.kmer);
             auto f_qmers = f_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
             auto f_results = search(f_kmers, fm_index, config);
-            do_a_count(f_results, f_qmers, which_group, is_ambiguous);
+            do_a_count(f_results, f_kmers, f_qmers, which_group, is_ambiguous);
 
             auto r_seq = seqan3::get<seqan3::field::seq>(rec2);
             auto r_qual = seqan3::get<seqan3::field::qual>(rec2);
             auto r_kmers = r_seq | ranges::views::sliding(args.kmer);
             auto r_qmers = r_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
             auto r_results = search(r_kmers, fm_index, config);
-            do_a_count(r_results, r_qmers, which_group, is_ambiguous);
+            do_a_count(r_results, r_kmers, r_qmers, which_group, is_ambiguous);
 
             if(is_ambiguous) ++ambiguous_reads;
         }
@@ -1035,14 +1047,16 @@ std::vector<double> speq::scan::_async_one_global_estimate_kmer_per_group(
     auto worker = [&, fm_index, group_names, double_group_scaffolds, config, args]()
     {
         std::vector<double> hits_per_group(group_names.size(),0.0);
-        auto do_a_count = [&](auto & results, auto & qmers)
+        auto do_a_count = [&](auto & results, auto & kmers, auto & qmers)
         {
             auto q_it = ranges::begin(qmers);
+            auto k_it = ranges::begin(kmers);
             for(auto r_it = ranges::begin(results); r_it != ranges::end(results); ++r_it)
             {
                 auto result = *r_it;
                 auto qesult = *q_it;
-                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff))
+                auto kesult = *k_it;
+                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff) && ranges::find(kesult, 'N'_dna5)==ranges::end(kesult))
                 {
                     std::vector<double> hits_per_group_int(group_names.size(), 0.0);
                     double temp_acc = 1.0 / percent_perfect - (1 - percent_perfect);
@@ -1069,6 +1083,7 @@ std::vector<double> speq::scan::_async_one_global_estimate_kmer_per_group(
                     }
                 }
                 ++q_it;
+                ++k_it;
             }
         };
         
@@ -1080,7 +1095,7 @@ std::vector<double> speq::scan::_async_one_global_estimate_kmer_per_group(
             auto f_kmers = f_seq | ranges::views::sliding(args.kmer);
             auto f_qmers = f_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
             auto f_results = search(f_kmers, fm_index, config);
-            do_a_count(f_results, f_qmers);
+            do_a_count(f_results, f_kmers, f_qmers);
         }
         return hits_per_group;
     };
@@ -1119,14 +1134,16 @@ std::vector<double> speq::scan::_async_one_local_estimate_kmer_per_group(
     auto worker = [&, fm_index, group_names, double_group_scaffolds, config, args]()
     {
         std::vector<double> hits_per_group(group_names.size(),0.0);
-        auto do_a_count = [&](auto & results, auto & qmers)
+        auto do_a_count = [&](auto & results, auto & kmers, auto & qmers)
         {
             auto q_it = ranges::begin(qmers);
+            auto k_it = ranges::begin(kmers);
             for(auto r_it = ranges::begin(results); r_it != ranges::end(results); ++r_it)
             {
                 auto result = *r_it;
                 auto qesult = *q_it;
-                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff))
+                auto kesult = *k_it;
+                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff) && ranges::find(kesult, 'N'_dna5)==ranges::end(kesult))
                 {
                     std::vector<double> hits_per_group_int(group_names.size(), 0.0);
                     // Add an estimate of the "false negative" probability of this kmer
@@ -1159,6 +1176,7 @@ std::vector<double> speq::scan::_async_one_local_estimate_kmer_per_group(
                     }
                 }
                 ++q_it;
+                ++k_it;
             }
         };
         
@@ -1170,7 +1188,7 @@ std::vector<double> speq::scan::_async_one_local_estimate_kmer_per_group(
             auto f_kmers = f_seq | ranges::views::sliding(args.kmer);
             auto f_qmers = f_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
             auto f_results = search(f_kmers, fm_index, config);
-            do_a_count(f_results, f_qmers);
+            do_a_count(f_results, f_kmers, f_qmers);
         }
         return hits_per_group;
     };
@@ -1213,14 +1231,16 @@ std::vector<double> speq::scan::_async_two_global_estimate_kmer_per_group(
     auto worker = [&, fm_index, group_names, double_group_scaffolds, config, args]()
     {
         std::vector<double> hits_per_group(group_names.size(),0.0);
-        auto do_a_count = [&](auto & results, auto & qmers)
+        auto do_a_count = [&](auto & results, auto & kmers, auto & qmers)
         {
             auto q_it = ranges::begin(qmers);
+            auto k_it = ranges::begin(kmers);
             for(auto r_it = ranges::begin(results); r_it != ranges::end(results); ++r_it)
             {
                 auto result = *r_it;
                 auto qesult = *q_it;
-                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff))
+                auto kesult = *k_it;
+                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff) && ranges::find(kesult, 'N'_dna5)==ranges::end(kesult))
                 {
                     std::vector<double> hits_per_group_int(group_names.size(), 0.0);
                     double temp_acc = 1.0 / percent_perfect - (1 - percent_perfect);
@@ -1247,6 +1267,7 @@ std::vector<double> speq::scan::_async_two_global_estimate_kmer_per_group(
                     }
                 }
                 ++q_it;
+                ++k_it;
             }
         };
         
@@ -1258,14 +1279,14 @@ std::vector<double> speq::scan::_async_two_global_estimate_kmer_per_group(
             auto f_kmers = f_seq | ranges::views::sliding(args.kmer);
             auto f_qmers = f_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
             auto f_results = search(f_kmers, fm_index, config);
-            do_a_count(f_results, f_qmers);
+            do_a_count(f_results, f_kmers, f_qmers);
 
             auto r_seq = seqan3::get<seqan3::field::seq>(rec2);
             auto r_qual = seqan3::get<seqan3::field::qual>(rec2);
             auto r_kmers = r_seq | ranges::views::sliding(args.kmer);
             auto r_qmers = r_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
             auto r_results = search(r_kmers, fm_index, config);
-            do_a_count(r_results, r_qmers);
+            do_a_count(r_results, r_kmers, r_qmers);
         }
         return hits_per_group;
     };
@@ -1306,14 +1327,16 @@ std::vector<double> speq::scan::_async_two_local_estimate_kmer_per_group(
     auto worker = [&, fm_index, group_names, double_group_scaffolds, config, args]()
     {
         std::vector<double> hits_per_group(group_names.size(),0.0);
-        auto do_a_count = [&](auto & results, auto & qmers)
+        auto do_a_count = [&](auto & results, auto & kmers, auto & qmers)
         {
             auto q_it = ranges::begin(qmers);
+            auto k_it = ranges::begin(kmers);
             for(auto r_it = ranges::begin(results); r_it != ranges::end(results); ++r_it)
             {
                 auto result = *r_it;
                 auto qesult = *q_it;
-                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff))
+                auto kesult = *k_it;
+                if(ranges::min(qesult) > static_cast<int>(args.phred_cutoff) && ranges::find(kesult, 'N'_dna5)==ranges::end(kesult))
                 {
                     std::vector<double> hits_per_group_int(group_names.size(), 0.0);
                     // Add an estimate of the "false negative" probability of this kmer
@@ -1347,6 +1370,7 @@ std::vector<double> speq::scan::_async_two_local_estimate_kmer_per_group(
 
                 }
                 ++q_it;
+                ++k_it;
             }
         };
         
@@ -1358,14 +1382,14 @@ std::vector<double> speq::scan::_async_two_local_estimate_kmer_per_group(
             auto f_kmers = f_seq | ranges::views::sliding(args.kmer);
             auto f_qmers = f_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
             auto f_results = search(f_kmers, fm_index, config);
-            do_a_count(f_results, f_qmers);
+            do_a_count(f_results, f_kmers, f_qmers);
 
             auto r_seq = seqan3::get<seqan3::field::seq>(rec2);
             auto r_qual = seqan3::get<seqan3::field::qual>(rec2);
             auto r_kmers = r_seq | ranges::views::sliding(args.kmer);
             auto r_qmers = r_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
             auto r_results = search(r_kmers, fm_index, config);
-            do_a_count(r_results, r_qmers);
+            do_a_count(r_results, r_kmers, r_qmers);
         }
         return hits_per_group;
     };
@@ -1402,7 +1426,7 @@ std::vector<double> speq::scan::unique_to_percent(
         {
             // Get the percentage of each reference genome that is unique
             double percent_uniques = unique_in_refs[i] / total_in_refs[i];
-            output[i] = unique_in_reads[i] / static_cast<double>(total_in_reads) / percent_uniques;
+            output[i] = 100.0 * unique_in_reads[i] / static_cast<double>(total_in_reads) / percent_uniques;
         }
         
     }
