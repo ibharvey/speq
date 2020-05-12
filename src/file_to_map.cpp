@@ -19,10 +19,11 @@ inline bool speq::utils::is_integer(const std::string & s)
 
 void speq::file_to_map(   std::filesystem::path a_path,
                     std::vector<std::string> & group_names, 
-                    std::vector<int> & group_scaffolds)
+                    std::vector<int> & group_scaffolds,
+                    std::vector<int> & group_count)
 {
     std::ifstream inf(a_path);
-    std::string line,variant,token;
+    std::string line,variant,token,genome_count;
     size_t variant_index = -1;
     if(inf.is_open())
     {
@@ -34,10 +35,14 @@ void speq::file_to_map(   std::filesystem::path a_path,
             if(line.find(":") != std::string::npos)
             {
                 // Get the strain/species group name
-                auto col_ind = line.find(":");
-                variant = line.substr(0,col_ind);
+                auto open_parenthesis = line.find("(");
+                variant = line.substr(0,open_parenthesis);
                 group_names.push_back(variant);
+                auto close_parenthesis = line.find(")");
+                genome_count = line.substr(open_parenthesis+1,close_parenthesis-open_parenthesis-1);
+                group_count.push_back(std::stoi(genome_count));
                 variant_index++;
+                auto col_ind = line.find(":");
                 // Get the scaffold indices that are assigned to this strain/species
                 auto gis = line.substr(col_ind + 1);
                 std::stringstream ss;

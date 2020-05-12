@@ -37,6 +37,7 @@ int speq::scan::_async_one_with_global_error_rate(  speq::args::cmd_arguments & 
     // Import the index sequence file (.idx)
     std::vector<std::string> group_names{};
     std::vector<int> group_scaffolds{};
+    std::vector<int> group_counts{};
     std::filesystem::path stored_scaffold_file_name;
     std::filesystem::file_time_type scaffold_file_time;
     std::filesystem::file_time_type group_file_time;
@@ -52,6 +53,7 @@ int speq::scan::_async_one_with_global_error_rate(  speq::args::cmd_arguments & 
         iarchive(group_file_time);
         iarchive(group_names);
         iarchive(group_scaffolds);
+        iarchive(group_counts);
         iarchive(fm_index);
     }
 
@@ -252,6 +254,7 @@ int speq::scan::_async_one_with_global_error_rate(  speq::args::cmd_arguments & 
             percent_each_group,
             args,
             group_names,
+            group_counts,
             double_group_scaffolds,
             fm_index,
             percent_perfect
@@ -308,6 +311,7 @@ int speq::scan::_async_one_with_local_error_rate(   speq::args::cmd_arguments & 
     // Import the index sequence file (.idx)
     std::vector<std::string> group_names{};
     std::vector<int> group_scaffolds{};
+    std::vector<int> group_counts{};
     std::filesystem::path stored_scaffold_file_name;
     std::filesystem::file_time_type scaffold_file_time;
     std::filesystem::file_time_type group_file_time;
@@ -323,6 +327,7 @@ int speq::scan::_async_one_with_local_error_rate(   speq::args::cmd_arguments & 
         iarchive(group_file_time);
         iarchive(group_names);
         iarchive(group_scaffolds);
+        iarchive(group_counts);
         iarchive(fm_index);
     }
     
@@ -516,6 +521,7 @@ int speq::scan::_async_one_with_local_error_rate(   speq::args::cmd_arguments & 
             percent_each_group,
             args,
             group_names,
+            group_counts,
             double_group_scaffolds,
             fm_index
         );
@@ -545,6 +551,7 @@ int speq::scan::_async_two_with_global_error_rate(    speq::args::cmd_arguments 
     // Import the index sequence file (.idx)
     std::vector<std::string> group_names{};
     std::vector<int> group_scaffolds{};
+    std::vector<int> group_counts{};
     std::filesystem::path stored_scaffold_file_name;
     std::filesystem::file_time_type scaffold_file_time;
     std::filesystem::file_time_type group_file_time;
@@ -560,6 +567,7 @@ int speq::scan::_async_two_with_global_error_rate(    speq::args::cmd_arguments 
         iarchive(group_file_time);
         iarchive(group_names);
         iarchive(group_scaffolds);
+        iarchive(group_counts);
         iarchive(fm_index);
     }
 
@@ -759,6 +767,7 @@ int speq::scan::_async_two_with_global_error_rate(    speq::args::cmd_arguments 
             percent_each_group,
             args,
             group_names,
+            group_counts,
             double_group_scaffolds,
             fm_index,
             percent_perfect
@@ -790,6 +799,7 @@ int speq::scan::_async_two_with_local_error_rate(    speq::args::cmd_arguments &
     // Import the index sequence file (.idx)
     std::vector<std::string> group_names{};
     std::vector<int> group_scaffolds{};
+    std::vector<int> group_counts{};
     std::filesystem::path stored_scaffold_file_name;
     std::filesystem::file_time_type scaffold_file_time;
     std::filesystem::file_time_type group_file_time;
@@ -805,6 +815,7 @@ int speq::scan::_async_two_with_local_error_rate(    speq::args::cmd_arguments &
         iarchive(group_file_time);
         iarchive(group_names);
         iarchive(group_scaffolds);
+        iarchive(group_counts);
         iarchive(fm_index);
     }
 
@@ -1006,6 +1017,7 @@ int speq::scan::_async_two_with_local_error_rate(    speq::args::cmd_arguments &
             percent_each_group,
             args,
             group_names,
+            group_counts,
             double_group_scaffolds,
             fm_index
         );
@@ -1034,6 +1046,7 @@ std::vector<double> speq::scan::_async_one_global_estimate_kmer_per_group(
     const std::vector<double> & percent_per_group,
     const speq::args::cmd_arguments & args,
     const std::vector<std::string> & group_names,
+    const std::vector<int> & group_counts,
     const std::vector<int> & double_group_scaffolds,
     const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index,
     const double percent_perfect
@@ -1069,7 +1082,7 @@ std::vector<double> speq::scan::_async_one_global_estimate_kmer_per_group(
                     std::vector<double> a_hit_per_group(group_names.size(),0.0);
                     for(std::size_t i = 0; i < group_names.size(); ++i)
                     {
-                        a_hit_per_group[i] = hits_per_group_int[i] * percent_per_group[i];
+                        a_hit_per_group[i] = hits_per_group_int[i] * percent_per_group[i]  / group_counts[i];
                     }
                     // The total sum of the normalized groups
                     double normalized_sum = std::accumulate(a_hit_per_group.begin(), a_hit_per_group.end(), 0.0);
@@ -1122,6 +1135,7 @@ std::vector<double> speq::scan::_async_one_local_estimate_kmer_per_group(
     const std::vector<double> & percent_per_group,
     const speq::args::cmd_arguments & args,
     const std::vector<std::string> & group_names,
+    const std::vector<int> & group_counts,
     const std::vector<int> & double_group_scaffolds,
     const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index
 )
@@ -1162,7 +1176,7 @@ std::vector<double> speq::scan::_async_one_local_estimate_kmer_per_group(
                     std::vector<double> a_hit_per_group(group_names.size(),0.0);
                     for(std::size_t i = 0; i < group_names.size(); ++i)
                     {
-                        a_hit_per_group[i] = hits_per_group_int[i] * percent_per_group[i];
+                        a_hit_per_group[i] = hits_per_group_int[i] * percent_per_group[i]  / group_counts[i];
                     }
                     // The total sum of the normalized groups
                     double normalized_sum = std::accumulate(a_hit_per_group.begin(), a_hit_per_group.end(), 0.0);
@@ -1216,6 +1230,7 @@ std::vector<double> speq::scan::_async_two_global_estimate_kmer_per_group(
     const std::vector<double> & percent_per_group,
     const speq::args::cmd_arguments & args,
     const std::vector<std::string> & group_names,
+    const std::vector<int> & group_counts,
     const std::vector<int> & double_group_scaffolds,
     const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index,
     const double percent_perfect
@@ -1253,7 +1268,7 @@ std::vector<double> speq::scan::_async_two_global_estimate_kmer_per_group(
                     std::vector<double> a_hit_per_group(group_names.size(),0.0);
                     for(std::size_t i = 0; i < group_names.size(); ++i)
                     {
-                        a_hit_per_group[i] = hits_per_group_int[i] * percent_per_group[i];
+                        a_hit_per_group[i] = hits_per_group_int[i] * percent_per_group[i] / group_counts[i];
                     }
                     // The total sum of the normalized groups
                     double normalized_sum = std::accumulate(a_hit_per_group.begin(), a_hit_per_group.end(), 0.0);
@@ -1313,6 +1328,7 @@ std::vector<double> speq::scan::_async_two_local_estimate_kmer_per_group(
     const std::vector<double> & percent_per_group,
     const speq::args::cmd_arguments & args,
     const std::vector<std::string> & group_names,
+    const std::vector<int> & group_counts,
     const std::vector<int> & double_group_scaffolds,
     const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index
 )
@@ -1355,7 +1371,7 @@ std::vector<double> speq::scan::_async_two_local_estimate_kmer_per_group(
                     std::vector<double> a_hit_per_group(group_names.size(),0.0);
                     for(std::size_t i = 0; i < group_names.size(); ++i)
                     {
-                        a_hit_per_group[i] = hits_per_group_int[i] * percent_per_group[i];
+                        a_hit_per_group[i] = hits_per_group_int[i] * percent_per_group[i]  / group_counts[i];
                     }
                     // The total sum of the normalized groups
                     double normalized_sum = std::accumulate(a_hit_per_group.begin(), a_hit_per_group.end(), 0.0);

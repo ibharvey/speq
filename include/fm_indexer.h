@@ -54,7 +54,8 @@ namespace speq
             const std::filesystem::file_time_type & scaffold_file_time,
             const std::filesystem::file_time_type & group_file_time,
             const std::vector<std::string> & group_names,
-            const std::vector<int> & group_scaffolds
+            const std::vector<int> & group_scaffolds,
+            const std::vector<int> & group_counts
         );
         
     }

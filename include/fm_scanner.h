@@ -95,6 +95,7 @@ namespace speq
             const std::vector<double> & percent_per_group,
             const speq::args::cmd_arguments & args,
             const std::vector<std::string> & group_names,
+            const std::vector<int> & group_counts,
             const std::vector<int> & double_group_scaffolds,
             const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index,
             const double percent_perfect
@@ -104,6 +105,7 @@ namespace speq
             const std::vector<double> & percent_per_group,
             const speq::args::cmd_arguments & args,
             const std::vector<std::string> & group_names,
+            const std::vector<int> & group_counts,
             const std::vector<int> & double_group_scaffolds,
             const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index
         );
@@ -112,6 +114,7 @@ namespace speq
             const std::vector<double> & percent_per_group,
             const speq::args::cmd_arguments & args,
             const std::vector<std::string> & group_names,
+            const std::vector<int> & group_counts,
             const std::vector<int> & double_group_scaffolds,
             const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index,
             const double percent_perfect
@@ -121,6 +124,7 @@ namespace speq
             const std::vector<double> & percent_per_group,
             const speq::args::cmd_arguments & args,
             const std::vector<std::string> & group_names,
+            const std::vector<int> & group_counts,
             const std::vector<int> & double_group_scaffolds,
             const seqan3::fm_index<seqan3::dna5, seqan3::text_layout::collection> & fm_index
         );

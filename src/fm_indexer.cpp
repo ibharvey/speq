@@ -10,7 +10,8 @@ void speq::fm::generate_fm_index(
     const std::filesystem::file_time_type & scaffold_file_time,
     const std::filesystem::file_time_type & group_file_time,
     const std::vector<std::string> & group_names,
-    const std::vector<int> & group_scaffolds
+    const std::vector<int> & group_scaffolds,
+    const std::vector<int> & group_counts
 )
 {
     //################ Input the references for indexing ################
@@ -44,6 +45,7 @@ void speq::fm::generate_fm_index(
         oarchive(group_file_time);
         oarchive(group_names);
         oarchive(group_scaffolds);
+        oarchive(group_counts);
         oarchive(index);
     }
     return;
@@ -60,8 +62,9 @@ int speq::fm::index( speq::args::cmd_arguments & args)
     std::filesystem::file_time_type group_file_time = std::filesystem::last_write_time(args.in_file_references_groups);
     // Organize the reference sequences by strain/variant type
     std::vector<int> group_scaffolds;
+    std::vector<int> group_counts;
     std::vector<std::string> group_names;
-    speq::file_to_map(args.in_file_references_groups, group_names, group_scaffolds);
+    speq::file_to_map(args.in_file_references_groups, group_names, group_scaffolds, group_counts);
     if(std::filesystem::exists(args.io_file_index) && !args.is_force)
     {
         // Check if the index, or files that construct the index, were changed since last indexing
@@ -87,7 +90,8 @@ int speq::fm::index( speq::args::cmd_arguments & args)
                 scaffold_file_time,
                 group_file_time, 
                 group_names,
-                group_scaffolds
+                group_scaffolds,
+                group_counts
             );
         }
     }
@@ -99,7 +103,8 @@ int speq::fm::index( speq::args::cmd_arguments & args)
             scaffold_file_time,
             group_file_time, 
             group_names,
-            group_scaffolds
+            group_scaffolds,
+            group_counts
         );
     }
     return 0;

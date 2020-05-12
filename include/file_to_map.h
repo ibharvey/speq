@@ -20,7 +20,8 @@ namespace speq
     }
     void file_to_map(   const std::filesystem::path a_path, 
                     std::vector<std::string> & group_names, 
-                    std::vector<int> & group_scaffolds);
+                    std::vector<int> & group_scaffolds,
+                    std::vector<int> & group_count);
 }
 
 
