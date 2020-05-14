@@ -912,8 +912,8 @@ int speq::scan::_async_two_with_local_error_rate(    speq::args::cmd_arguments &
                     group_names, double_group_scaffolds, config, args] ()
     {
         std::vector<double> unique_kmers(group_names.size(),0);
-        
-        auto do_a_count = [&](auto & results, auto & kmers, auto & qmers, int & which_group, bool & is_ambiguous)
+        std::map<std::set<int>,int> fusion_read_counts;
+        auto do_a_count = [&](auto & results, auto & kmers, auto & qmers, int & which_group, bool & is_ambiguous, std::set<int> set_groups)
         {
             auto q_it = ranges::begin(qmers);
             auto k_it = ranges::begin(kmers);
@@ -946,12 +946,14 @@ int speq::scan::_async_two_with_local_error_rate(    speq::args::cmd_arguments &
                         //      because I don't have a justification to ignore it.
                         if(which_group >= 0 && which_group != which_hit)
                         {
+                            //Indicates the read looks like a fusion between two different genomes
+                            //    Unique kmers from distinct genomes found in one read
                             is_ambiguous = true;
+                            set_groups.insert(which_group);
+                            set_groups.insert(which_hit);
                         }
-                        else
-                        {
-                            which_group = which_hit;
-                        }
+                        //If the read is ambiguous (two unique kmers ), which group is just a placeholder for the last-seen genotype
+                        which_group = which_hit;
                     }  
                 }
                 ++q_it; 
@@ -962,39 +964,60 @@ int speq::scan::_async_two_with_local_error_rate(    speq::args::cmd_arguments &
         {
             bool is_ambiguous = false;
             int which_group = -1;
+            std::set<int>set_groups;
             
             auto f_seq = seqan3::get<seqan3::field::seq>(rec1);
             auto f_qual = seqan3::get<seqan3::field::qual>(rec1);
             auto f_kmers = f_seq | ranges::views::sliding(args.kmer);
             auto f_qmers = f_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
             auto f_results = search(f_kmers, fm_index, config);
-            do_a_count(f_results, f_kmers, f_qmers, which_group, is_ambiguous);
+            do_a_count(f_results, f_kmers, f_qmers, which_group, is_ambiguous, set_groups);
 
             auto r_seq = seqan3::get<seqan3::field::seq>(rec2);
             auto r_qual = seqan3::get<seqan3::field::qual>(rec2);
             auto r_kmers = r_seq | ranges::views::sliding(args.kmer);
             auto r_qmers = r_qual | ranges::views::transform([](auto q) { return q.to_phred();}) | ranges::views::sliding(args.kmer);
             auto r_results = search(r_kmers, fm_index, config);
-            do_a_count(r_results, r_kmers, r_qmers, which_group, is_ambiguous);
+            do_a_count(r_results, r_kmers, r_qmers, which_group, is_ambiguous, set_groups);
 
-            if(is_ambiguous) ++ambiguous_reads;
+            if(is_ambiguous) 
+            {
+                ++ambiguous_reads;
+                if(fusion_read_counts.find(set_groups)!=fusion_read_counts.end())
+                {
+                    fusion_read_counts[set_groups] += 1;
+                }
+                else
+                {
+                    fusion_read_counts[set_groups] = 1;
+                }
+
+            }
         }
-        return unique_kmers;
+        return std::make_pair(unique_kmers, fusion_read_counts);
     };
 
-    std::vector<std::future<std::vector<double>>> futures;
+    std::vector<std::future<std::pair<std::vector<double>,std::map<std::set<int>,int>>>> futures;
     for(std::size_t thread = 0; thread < args.threads - 1; ++thread)
     {
         futures.push_back(std::async(std::launch::async, worker));
     }
 
     std::vector<double> unique_totals(group_names.size(),0);
+    std::map<std::set<int>,int> fusion_totals;
     for(auto &e : futures)
     {
-        auto a_unique = e.get();
-        for(std::size_t i = 0; i < a_unique.size(); ++i)
+        auto e_res = e.get();
+        // Add unique kmers to counts
+        for(std::size_t i = 0; i < e_res.first.size(); ++i)
         {
-            unique_totals[i] += a_unique[i];
+            unique_totals[i] += e_res.first[i];
+        }
+        // Add ambiguous read fusions to map
+        for(auto const& [key,val] : e_res.second)
+        {
+            if(fusion_totals.find(key)==fusion_totals.end())fusion_totals[key] = 0;
+            fusion_totals[key] += val;
         }
     }
     auto percent_each_group = speq::scan::unique_to_percent(
@@ -1007,6 +1030,7 @@ int speq::scan::_async_two_with_local_error_rate(    speq::args::cmd_arguments &
     seqan3::debug_stream << percent_each_group << "\n";
     seqan3::debug_stream << unique_totals << "\n";
     seqan3::debug_stream << total_kmers << "\t" << ambiguous_reads << "\n";
+    seqan3::debug_stream << fusion_totals << "\n";
 
     std::vector<double> diff_perc(group_names.size(),1.0);
     while(*std::max_element(diff_perc.begin(), diff_perc.end()) > args.precision)
