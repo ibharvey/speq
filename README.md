@@ -1,7 +1,7 @@
 # SPeQ - Strain PErcent Quantifier
 
 ## Rationale
-Metagenomic sequencing studies can contain DNA from multiple species, which are often relatively easy to distinguish. However, if a sample contains multiple variants of the same virus/organism, a large fraction of the reads may be synonymous in both variants. SPeQ only uses the polymorphisms that distinguish individual variants in order to sensitively quantify percentages of strains/variants.
+Metagenomic sequencing studies can contain DNA from multiple species, which are often relatively easy to distinguish. However, if a sample contains multiple variants of the same virus/organism, a large fraction of the reads may be synonymous in both variants. SPeQ only uses the polymorphisms that distinguish individual variants in order to sensitively quantify percentages of strains/variants. Because of this, it can be extremely slow compared to hash table methods, but maintains high sensitivity.
 
 ## Usage
 ### SPeQ-Index
@@ -9,7 +9,7 @@ Organize a directory so that each of its subdirectories is a genomic variant, an
 
 
 ### SPeQ-Scan
-
+Compare reads to defined genotypes to determine the fractional abundance of each in a sample.
 
 ## Installation
 ### With Docker (from source)
